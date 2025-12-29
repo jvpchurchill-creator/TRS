@@ -587,7 +587,7 @@ CHARACTERS = {
         {"id": "peni-parker", "name": "Peni Parker", "basePrice": 25, "icon": f"{ICON_BASE}Peni%20Parker%20Deluxe%20Avatar.png"},
         {"id": "captain-america", "name": "Captain America", "basePrice": 30, "icon": f"{ICON_BASE}Captain%20America%20Deluxe%20Avatar.png"},
         {"id": "magneto", "name": "Magneto", "basePrice": 40, "icon": f"{ICON_BASE}Magneto%20Deluxe%20Avatar.png"},
-        {"id": "rogue", "name": "Rogue", "basePrice": 25, "icon": None}
+        {"id": "rogue", "name": "Rogue", "basePrice": 25, "icon": "https://customer-assets.emergentagent.com/job_boostservice/artifacts/4ozw7k2w_image.png"}
     ],
     "strategist": [
         {"id": "adam-warlock", "name": "Adam Warlock", "basePrice": 40, "icon": f"{ICON_BASE}Adam%20Warlock%20Deluxe%20Avatar.png"},
