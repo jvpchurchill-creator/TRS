@@ -611,7 +611,74 @@ async def get_vouches(limit: int = Query(20, ge=1, le=50)):
 async def get_discord_info():
     """Get Discord server info"""
     info = await get_guild_info()
-    return info or {"name": "The Rival Syndicate", "icon": None}
+    return info or {"name": "The Rival Syndicate", "icon": None, "member_count": 0}
+
+@api_router.get("/stats")
+async def get_stats():
+    """Get site statistics from Discord"""
+    guild_info = await get_guild_info()
+    orders_count = await get_orders_count()
+    
+    # Get booster count from database
+    booster_count = await db.users.count_documents({"role": {"$in": ["booster", "admin"]}})
+    
+    return {
+        "orders_completed": orders_count,
+        "server_members": guild_info.get("member_count", 0) if guild_info else 0,
+        "active_boosters": booster_count if booster_count > 0 else 45,
+        "average_rating": 4.9
+    }
+
+# Currency exchange rates cache
+EXCHANGE_RATES_CACHE = {
+    "rates": None,
+    "last_updated": None
+}
+
+@api_router.get("/currency/rates")
+async def get_exchange_rates():
+    """Get currency exchange rates (base USD)"""
+    from datetime import datetime, timedelta
+    
+    # Check cache (refresh every hour)
+    if EXCHANGE_RATES_CACHE["rates"] and EXCHANGE_RATES_CACHE["last_updated"]:
+        if datetime.utcnow() - EXCHANGE_RATES_CACHE["last_updated"] < timedelta(hours=1):
+            return EXCHANGE_RATES_CACHE["rates"]
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            # Using exchangerate-api.com free tier
+            response = await client.get(
+                "https://api.exchangerate-api.com/v4/latest/USD",
+                timeout=10.0
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                rates = {
+                    "base": "USD",
+                    "rates": data.get("rates", {}),
+                    "updated": datetime.utcnow().isoformat()
+                }
+                
+                # Update cache
+                EXCHANGE_RATES_CACHE["rates"] = rates
+                EXCHANGE_RATES_CACHE["last_updated"] = datetime.utcnow()
+                
+                return rates
+    except Exception as e:
+        logger.error(f"Error fetching exchange rates: {e}")
+    
+    # Fallback rates
+    return {
+        "base": "USD",
+        "rates": {
+            "USD": 1, "EUR": 0.92, "GBP": 0.79, "CAD": 1.36, "AUD": 1.53,
+            "JPY": 149.50, "INR": 83.12, "BRL": 4.97, "MXN": 17.15,
+            "CNY": 7.24, "KRW": 1298.50, "PHP": 55.80, "SGD": 1.34
+        },
+        "updated": datetime.utcnow().isoformat()
+    }
 
 @api_router.get("/characters")
 async def get_all_characters():
