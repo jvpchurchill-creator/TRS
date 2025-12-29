@@ -186,14 +186,14 @@ async def fetch_vouches(limit: int = 50) -> List[Dict]:
         return []
 
 async def get_guild_info() -> Optional[Dict]:
-    """Get basic guild information"""
+    """Get basic guild information including member count"""
     if not BOT_TOKEN or not GUILD_ID:
         return None
     
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{DISCORD_API}/guilds/{GUILD_ID}",
+                f"{DISCORD_API}/guilds/{GUILD_ID}?with_counts=true",
                 headers=get_headers()
             )
             
@@ -202,9 +202,50 @@ async def get_guild_info() -> Optional[Dict]:
                 return {
                     "name": guild.get("name"),
                     "icon": f"https://cdn.discordapp.com/icons/{GUILD_ID}/{guild.get('icon')}.png" if guild.get("icon") else None,
-                    "member_count": guild.get("approximate_member_count")
+                    "member_count": guild.get("approximate_member_count", 0),
+                    "online_count": guild.get("approximate_presence_count", 0)
                 }
             return None
     except Exception as e:
         logger.error(f"Error fetching guild info: {e}")
         return None
+
+async def get_orders_count() -> int:
+    """Get count of messages in orders channel (completed orders)"""
+    if not BOT_TOKEN or not ORDERS_CHANNEL_ID:
+        return 0
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            # Fetch messages from orders channel (up to 100 at a time)
+            # We'll count total messages as completed orders
+            total_count = 0
+            last_id = None
+            
+            # Fetch up to 500 messages (5 requests)
+            for _ in range(5):
+                params = {"limit": 100}
+                if last_id:
+                    params["before"] = last_id
+                
+                response = await client.get(
+                    f"{DISCORD_API}/channels/{ORDERS_CHANNEL_ID}/messages",
+                    headers=get_headers(),
+                    params=params
+                )
+                
+                if response.status_code == 200:
+                    messages = response.json()
+                    if not messages:
+                        break
+                    total_count += len(messages)
+                    last_id = messages[-1]["id"]
+                    if len(messages) < 100:
+                        break
+                else:
+                    break
+            
+            return total_count
+    except Exception as e:
+        logger.error(f"Error fetching orders count: {e}")
+        return 0
