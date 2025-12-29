@@ -28,8 +28,14 @@ const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
+    // Only redirect if auth is fully loaded and user is not authenticated
     if (!authLoading && !isAuthenticated) {
-      navigate('/');
+      // Double check localStorage before redirecting
+      const storedToken = localStorage.getItem('accessToken');
+      const storedUser = localStorage.getItem('rivalSyndicateUser');
+      if (!storedToken || !storedUser) {
+        navigate('/');
+      }
     }
   }, [isAuthenticated, authLoading, navigate]);
 
