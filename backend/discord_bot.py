@@ -24,7 +24,8 @@ def get_config():
         "guild_id": os.environ.get('DISCORD_GUILD_ID'),
         "ticket_category_id": os.environ.get('DISCORD_TICKET_CATEGORY_ID'),
         "vouches_channel_id": os.environ.get('DISCORD_VOUCHES_CHANNEL_ID'),
-        "orders_channel_id": os.environ.get('DISCORD_ORDERS_CHANNEL_ID')
+        "orders_channel_id": os.environ.get('DISCORD_ORDERS_CHANNEL_ID'),
+        "booster_role_ids": os.environ.get('DISCORD_BOOSTER_ROLE_IDS', '').split(',')
     }
 
 def get_headers():
