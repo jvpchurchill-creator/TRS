@@ -189,6 +189,48 @@ backend:
         agent: "testing"
         comment: "✅ TESTED: User management endpoints (/api/users, /api/users/{id}/role) properly require authentication (return 401 without token). Admin-only access control working correctly."
 
+  - task: "Discord Bot Stats API"
+    implemented: true
+    working: true
+    file: "server.py, discord_bot.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "GET /api/stats returns live server members and orders completed from Discord"
+      - working: true
+        agent: "main"
+        comment: "API tested with curl - returns server_members: 9286, orders_completed: 15 from live Discord server"
+
+  - task: "Discord Bot Vouches API"
+    implemented: true
+    working: true
+    file: "server.py, discord_bot.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "GET /api/vouches fetches vouch messages from Discord channel"
+      - working: true
+        agent: "main"
+        comment: "API tested - now correctly parses mention-based vouches (users tag who they vouch for)"
+
+  - task: "Discord Ticket Creation"
+    implemented: true
+    working: "NA"
+    file: "server.py, discord_bot.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "POST /api/orders creates Discord ticket channel under specified category. Requires full login flow to test."
+
 frontend:
   - task: "Homepage with Spline 3D"
     implemented: true
