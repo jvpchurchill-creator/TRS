@@ -32,7 +32,7 @@ const paymentIcons = {
 };
 
 const ServicesPage = () => {
-  const { isAuthenticated, login, token } = useAuth();
+  const { isAuthenticated, login, token, loading } = useAuth();
   const [selectedClass, setSelectedClass] = useState('duelist');
   const [selectedServiceType, setSelectedServiceType] = useState('priority-farm');
   const [selectedCharacter, setSelectedCharacter] = useState(null);
@@ -47,6 +47,11 @@ const ServicesPage = () => {
   };
 
   const handleSelectCharacter = (character) => {
+    console.log('Select character - isAuthenticated:', isAuthenticated, 'loading:', loading);
+    if (loading) {
+      toast.info('Please wait, checking authentication...');
+      return;
+    }
     if (!isAuthenticated) {
       toast.error('Please login with Discord to purchase');
       login();
