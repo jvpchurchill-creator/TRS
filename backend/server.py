@@ -152,6 +152,7 @@ def decode_access_token(token: str):
 # Dependency to get current user
 async def get_current_user(authorization: str = None):
     if not authorization:
+        logger.warning("No authorization header provided")
         raise HTTPException(status_code=401, detail="Not authenticated")
     
     try:
@@ -160,20 +161,28 @@ async def get_current_user(authorization: str = None):
             token = authorization[7:]
         else:
             token = authorization
-            
+        
+        logger.info(f"Attempting to decode token: {token[:20]}...")
         payload = decode_access_token(token)
         if payload is None:
+            logger.warning("Token decode returned None")
             raise HTTPException(status_code=401, detail="Invalid token")
         
         user_id = payload.get("user_id")
         if user_id is None:
+            logger.warning("No user_id in token payload")
             raise HTTPException(status_code=401, detail="Invalid token")
         
+        logger.info(f"Looking up user with id: {user_id}")
         user = await db.users.find_one({"id": user_id})
         if user is None:
+            logger.warning(f"User not found with id: {user_id}")
             raise HTTPException(status_code=401, detail="User not found")
         
+        logger.info(f"Auth successful for user: {user.get('username')}")
         return user
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Auth error: {e}")
         raise HTTPException(status_code=401, detail="Authentication failed")
