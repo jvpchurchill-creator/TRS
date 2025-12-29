@@ -1,18 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 
 const AuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { handleAuthCallback } = useAuth();
   const [status, setStatus] = useState('loading'); // loading, success, error
 
   useEffect(() => {
     const processCallback = async () => {
-      const code = searchParams.get('code');
+      const token = searchParams.get('token');
+      const userParam = searchParams.get('user');
       const error = searchParams.get('error');
 
       if (error) {
@@ -22,28 +21,36 @@ const AuthCallback = () => {
         return;
       }
 
-      if (code) {
+      if (token && userParam) {
         try {
-          const data = await handleAuthCallback(code);
+          // Parse user data from URL
+          const userData = JSON.parse(decodeURIComponent(userParam));
+          
+          // Store in localStorage
+          localStorage.setItem('accessToken', token);
+          localStorage.setItem('rivalSyndicateUser', JSON.stringify(userData));
+          
           setStatus('success');
-          toast.success(`Welcome, ${data.user.username}!`);
+          toast.success(`Welcome, ${userData.username}!`);
+          
           setTimeout(() => {
-            navigate('/dashboard');
+            // Force full page reload to update auth context
+            window.location.href = '/dashboard';
           }, 1500);
         } catch (err) {
-          console.error('Auth error:', err);
+          console.error('Auth parsing error:', err);
           setStatus('error');
           toast.error('Authentication failed. Please try again.');
           setTimeout(() => navigate('/'), 2000);
         }
       } else {
-        // No code, redirect home
+        // No token, redirect home
         navigate('/');
       }
     };
 
     processCallback();
-  }, [searchParams, navigate, handleAuthCallback]);
+  }, [searchParams, navigate]);
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
