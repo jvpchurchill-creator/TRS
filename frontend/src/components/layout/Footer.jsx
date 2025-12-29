@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Crown, MessageCircle, Shield, Zap } from 'lucide-react';
+import { MessageCircle, Shield, Zap } from 'lucide-react';
+import { siteLogo, discordServer } from '../../data/mock';
 
 const Footer = () => {
   return (
@@ -10,17 +11,19 @@ const Footer = () => {
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
             <Link to="/" className="flex items-center gap-3 mb-6">
-              <div className="w-10 h-10 bg-[#00FFD1] flex items-center justify-center">
-                <Crown className="w-6 h-6 text-black" />
-              </div>
-              <span className="text-xl font-semibold text-white">Rival Syndicate</span>
+              <img 
+                src={siteLogo} 
+                alt="TRS Logo" 
+                className="w-12 h-12 rounded-lg object-cover"
+              />
+              <span className="text-xl font-semibold text-white">The Rival Syndicate</span>
             </Link>
             <p className="text-white/60 text-lg leading-relaxed max-w-md mb-6">
-              Elite lord farming and boosting services. Fast delivery, verified boosters, and 24/7 Discord support.
+              Elite lord farming and boosting services for Marvel Rivals. Fast delivery, verified boosters, and 24/7 Discord support.
             </p>
             <div className="flex gap-4">
               <a
-                href="https://discord.gg"
+                href={discordServer.inviteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-12 h-12 bg-white/10 flex items-center justify-center hover:bg-[#00FFD1] hover:text-black text-white transition-all duration-300"
@@ -75,7 +78,7 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="mt-16 pt-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-white/40 text-sm">
-            © 2025 Rival Syndicate. All rights reserved.
+            © 2025 The Rival Syndicate. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm">
             <Link to="/faq" className="text-white/40 hover:text-white transition-colors duration-300">
