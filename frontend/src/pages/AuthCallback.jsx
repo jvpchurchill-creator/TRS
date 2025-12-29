@@ -7,39 +7,29 @@ import { toast } from 'sonner';
 const AuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { mockLogin } = useAuth();
+  const { handleAuthCallback } = useAuth();
   const [status, setStatus] = useState('loading'); // loading, success, error
 
   useEffect(() => {
-    const handleCallback = async () => {
+    const processCallback = async () => {
       const code = searchParams.get('code');
       const error = searchParams.get('error');
 
       if (error) {
         setStatus('error');
-        toast.error('Authentication failed');
+        toast.error('Authentication failed: ' + error);
         setTimeout(() => navigate('/'), 2000);
         return;
       }
 
       if (code) {
         try {
-          const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-          const response = await fetch(`${BACKEND_URL}/api/auth/discord/callback?code=${code}`);
-          const data = await response.json();
-
-          if (data.success) {
-            // Store user in localStorage
-            localStorage.setItem('rivalSyndicateUser', JSON.stringify(data.user));
-            localStorage.setItem('accessToken', data.access_token);
-            setStatus('success');
-            toast.success(`Welcome, ${data.user.username}!`);
-            setTimeout(() => {
-              window.location.href = '/dashboard';
-            }, 1500);
-          } else {
-            throw new Error(data.error || 'Authentication failed');
-          }
+          const data = await handleAuthCallback(code);
+          setStatus('success');
+          toast.success(`Welcome, ${data.user.username}!`);
+          setTimeout(() => {
+            navigate('/dashboard');
+          }, 1500);
         } catch (err) {
           console.error('Auth error:', err);
           setStatus('error');
@@ -52,8 +42,8 @@ const AuthCallback = () => {
       }
     };
 
-    handleCallback();
-  }, [searchParams, navigate, mockLogin]);
+    processCallback();
+  }, [searchParams, navigate, handleAuthCallback]);
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
