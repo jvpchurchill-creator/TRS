@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { Sword, Shield, Brain, CreditCard, DollarSign, Wallet, Crown, Zap, Check, ArrowRight, ExternalLink } from 'lucide-react';
+import { Sword, Shield, Brain, CreditCard, DollarSign, Wallet, Crown, Zap, Check, ExternalLink } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { 
@@ -10,9 +10,8 @@ import {
   DialogDescription, 
   DialogHeader, 
   DialogTitle,
-  DialogFooter 
 } from '../components/ui/dialog';
-import { characters, characterClasses, serviceTypes, paymentMethods } from '../data/mock';
+import { characters, characterClasses, serviceTypes, paymentMethods, discordServer } from '../data/mock';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 
@@ -57,6 +56,7 @@ const ServicesPage = () => {
     const orderInfo = {
       character: selectedCharacter.name,
       characterClass: selectedClass,
+      characterIcon: selectedCharacter.icon,
       serviceType: selectedServiceType,
       price: getPrice(selectedCharacter.basePrice),
       timestamp: new Date().toISOString()
@@ -172,14 +172,30 @@ const ServicesPage = () => {
               return (
                 <Card
                   key={character.id}
-                  className="bg-[#121212] border-white/10 rounded-none hover:border-[#00FFD1]/50 transition-all duration-300 cursor-pointer group"
+                  className="bg-[#121212] border-white/10 rounded-none hover:border-[#00FFD1]/50 transition-all duration-300 cursor-pointer group overflow-hidden"
                   onClick={() => handleSelectCharacter(character)}
                 >
-                  <CardContent className="p-4 text-center">
-                    <div className="w-16 h-16 mx-auto mb-3 bg-white/5 flex items-center justify-center group-hover:bg-[#00FFD1]/20 transition-colors">
-                      <span className="text-2xl font-bold text-[#00FFD1]">
-                        {character.name.charAt(0)}
-                      </span>
+                  <CardContent className="p-3 text-center">
+                    <div className="w-full aspect-square mb-3 bg-black/50 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
+                      {character.icon ? (
+                        <img 
+                          src={character.icon} 
+                          alt={character.name}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div 
+                        className={`w-full h-full items-center justify-center ${character.icon ? 'hidden' : 'flex'}`}
+                        style={{ display: character.icon ? 'none' : 'flex' }}
+                      >
+                        <span className="text-4xl font-bold text-[#00FFD1]">
+                          {character.name.charAt(0)}
+                        </span>
+                      </div>
                     </div>
                     <h3 className="text-white font-medium text-sm mb-2 line-clamp-1">
                       {character.name}
@@ -211,18 +227,22 @@ const ServicesPage = () => {
             {paymentMethods.map((method) => {
               const Icon = paymentIcons[method.icon];
               return (
-                <div
+                <a
                   key={method.id}
-                  className="flex items-center gap-4 p-6 bg-[#121212] border border-white/10"
+                  href={method.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-4 p-6 bg-[#121212] border border-white/10 hover:border-[#00FFD1]/50 transition-all duration-300"
                 >
                   <div className="w-12 h-12 bg-[#00FFD1]/10 flex items-center justify-center">
                     <Icon className="w-6 h-6 text-[#00FFD1]" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <h3 className="text-white font-medium">{method.name}</h3>
                     <p className="text-white/40 text-sm">Instant payment</p>
                   </div>
-                </div>
+                  <ExternalLink className="w-4 h-4 text-white/40" />
+                </a>
               );
             })}
           </div>
@@ -241,31 +261,41 @@ const ServicesPage = () => {
           
           {selectedCharacter && (
             <div className="space-y-6 py-4">
+              {/* Character Preview */}
+              <div className="flex items-center gap-4 p-4 bg-black/50 border border-white/10">
+                <div className="w-20 h-20 bg-black/50 flex items-center justify-center overflow-hidden">
+                  {selectedCharacter.icon ? (
+                    <img 
+                      src={selectedCharacter.icon} 
+                      alt={selectedCharacter.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-3xl font-bold text-[#00FFD1]">
+                      {selectedCharacter.name.charAt(0)}
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold text-[#00FFD1]">{selectedCharacter.name}</h3>
+                  <p className="text-white/60 capitalize">{selectedClass}</p>
+                  <p className="text-white/80">{serviceType?.name}</p>
+                </div>
+              </div>
+
               {/* Order Summary */}
               <div className="p-4 bg-black/50 border border-white/10">
-                <h4 className="text-white/60 text-sm mb-3">Order Summary</h4>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-white">Character</span>
-                    <span className="text-[#00FFD1]">{selectedCharacter.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-white">Service</span>
-                    <span className="text-white/80">{serviceType?.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-white">Class</span>
-                    <span className="text-white/80 capitalize">{selectedClass}</span>
-                  </div>
-                  <div className="border-t border-white/10 pt-2 mt-2">
-                    <div className="flex justify-between">
-                      <span className="text-white font-semibold">Total</span>
-                      <span className="text-[#00FFD1] font-bold text-xl">
-                        ${getPrice(selectedCharacter.basePrice)}
-                      </span>
-                    </div>
-                  </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-white font-semibold">Total</span>
+                  <span className="text-[#00FFD1] font-bold text-2xl">
+                    ${getPrice(selectedCharacter.basePrice)}
+                  </span>
                 </div>
+                {selectedServiceType === 'lord-boosting' && (
+                  <p className="text-white/40 text-sm text-right">
+                    (base ${selectedCharacter.basePrice} + $10 boosting)
+                  </p>
+                )}
               </div>
 
               {/* Payment Options */}
