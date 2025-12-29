@@ -136,7 +136,10 @@ const ServicesPage = () => {
   };
 
   const handlePayment = async (paymentMethod) => {
-    if (!token) {
+    // Get token from context or localStorage as fallback
+    const authToken = token || localStorage.getItem('accessToken');
+    
+    if (!authToken) {
       toast.error('Please login first to place an order.');
       return;
     }
@@ -155,8 +158,10 @@ const ServicesPage = () => {
         payment_method: paymentMethod.id
       };
       
+      console.log('Creating order with token:', authToken?.substring(0, 20) + '...');
+      
       await axios.post(`${API}/orders`, orderData, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${authToken}` }
       });
       
       toast.success('Order created! Complete payment to proceed.', {
@@ -168,8 +173,12 @@ const ServicesPage = () => {
       setCheckoutOpen(false);
     } catch (error) {
       console.error('Failed to create order:', error);
+      console.error('Response:', error.response?.data);
       if (error.response?.status === 401) {
         toast.error('Session expired. Please login again.');
+        // Clear invalid session
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('rivalSyndicateUser');
       } else {
         toast.error('Failed to create order. Please try again.');
       }
