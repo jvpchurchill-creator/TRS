@@ -98,12 +98,12 @@ const HomePage = () => {
   return (
     <div className="bg-black">
       {/* Currency Selector - Fixed Position */}
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed bottom-20 right-6 z-50">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button 
               variant="outline" 
-              className="bg-[#121212] border-white/20 text-white hover:bg-[#00FFD1] hover:text-black hover:border-[#00FFD1] rounded-none px-4 py-2"
+              className="bg-[#121212] border-[#00FFD1]/50 text-white hover:bg-[#00FFD1] hover:text-black hover:border-[#00FFD1] rounded-none px-4 py-2 shadow-lg"
             >
               <span className="mr-2">{currentCurrencyData.symbol}</span>
               {currency}
