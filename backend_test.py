@@ -509,6 +509,13 @@ class APITester:
         self.test_characters_api()
         self.test_characters_by_class()
         
+        # Discord Integration Tests (HIGH PRIORITY)
+        print("🤖 DISCORD INTEGRATION TESTS")
+        print("-" * 30)
+        self.test_discord_stats_api()
+        self.test_discord_vouches_api()
+        self.test_currency_rates_api()
+        
         # Authentication Tests
         print("🔐 AUTHENTICATION TESTS")
         print("-" * 30)
