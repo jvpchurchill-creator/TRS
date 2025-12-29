@@ -91,7 +91,7 @@ const HomePage = () => {
   const displayStats = [
     { value: stats.orders_completed > 0 ? stats.orders_completed.toLocaleString() + '+' : '500+', label: 'Orders Completed' },
     { value: stats.server_members > 0 ? stats.server_members.toLocaleString() + '+' : '1000+', label: 'Server Members' },
-    { value: stats.active_boosters + '+', label: 'Active Boosters' },
+    { value: (stats.active_boosters > 0 ? stats.active_boosters : 45) + '+', label: 'Active Boosters' },
     { value: stats.average_rating.toString(), label: 'Average Rating' },
   ];
 
