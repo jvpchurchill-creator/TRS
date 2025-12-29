@@ -297,14 +297,25 @@ const ServicesPage = () => {
                           src={character.icon} 
                           alt={character.name}
                           className="w-full h-full object-cover"
+                          loading="lazy"
                           onError={(e) => {
+                            console.log('Image failed to load:', character.icon);
+                            e.target.onerror = null; // Prevent infinite loop
                             e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
+                            if (e.target.nextSibling) {
+                              e.target.nextSibling.style.display = 'flex';
+                            }
+                          }}
+                          onLoad={(e) => {
+                            e.target.style.display = 'block';
+                            if (e.target.nextSibling) {
+                              e.target.nextSibling.style.display = 'none';
+                            }
                           }}
                         />
                       ) : null}
                       <div 
-                        className={`w-full h-full items-center justify-center ${character.icon ? 'hidden' : 'flex'}`}
+                        className="w-full h-full items-center justify-center"
                         style={{ display: character.icon ? 'none' : 'flex' }}
                       >
                         <span className="text-4xl font-bold text-[#00FFD1]">
