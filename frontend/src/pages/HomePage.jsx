@@ -1,13 +1,36 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Crown, Zap, Shield, MessageCircle, Users, Star, Clock } from 'lucide-react';
+import { ArrowRight, Crown, Zap, Shield, MessageCircle, Users, Star, Clock, Quote } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { mockStats, siteLogo, discordServer } from '../data/mock';
+import { Card, CardContent } from '../components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import { mockStats, discordServer } from '../data/mock';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 // Lazy load Spline for performance
 const Spline = React.lazy(() => import('@splinetool/react-spline'));
 
 const HomePage = () => {
+  const [vouches, setVouches] = useState([]);
+  const [loadingVouches, setLoadingVouches] = useState(true);
+
+  useEffect(() => {
+    const fetchVouches = async () => {
+      try {
+        const response = await axios.get(`${API}/vouches?limit=6`);
+        setVouches(response.data);
+      } catch (error) {
+        console.error('Failed to fetch vouches:', error);
+      } finally {
+        setLoadingVouches(false);
+      }
+    };
+    fetchVouches();
+  }, []);
+
   const trustPoints = [
     { icon: Zap, title: 'Fast Delivery', description: 'Most orders completed within 24-48 hours' },
     { icon: Shield, title: 'Verified Boosters', description: '100% vetted professionals with proven track records' },
@@ -52,7 +75,7 @@ const HomePage = () => {
               </h1>
               
               <p className="text-xl text-white/70 leading-relaxed max-w-lg">
-                Elite Lord Farming & Boosting services. Dominate the game with our professional team of verified boosters.
+                Elite Lord Farming & Boosting services for Marvel Rivals. Dominate the game with our professional team of verified boosters.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4">
@@ -134,8 +157,61 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* Vouches Section */}
+      {vouches.length > 0 && (
+        <section className="py-24 bg-[#121212]/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#00FFD1]/10 border border-[#00FFD1]/30 mb-6">
+                <Star className="w-4 h-4 text-[#00FFD1]" />
+                <span className="text-[#00FFD1] text-sm">Customer Reviews</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-semibold text-white mb-6">What Our Customers Say</h2>
+              <p className="text-xl text-white/60 max-w-2xl mx-auto">
+                Real feedback from our Discord community
+              </p>
+            </div>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {vouches.map((vouch, index) => (
+                <Card key={vouch.id || index} className="bg-[#121212] border-white/10 rounded-none hover:border-[#00FFD1]/30 transition-all duration-300">
+                  <CardContent className="p-6">
+                    <Quote className="w-8 h-8 text-[#00FFD1]/30 mb-4" />
+                    <p className="text-white/80 mb-6 line-clamp-4">{vouch.content}</p>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="w-10 h-10 rounded-none">
+                        <AvatarImage src={vouch.author?.avatar} />
+                        <AvatarFallback className="bg-[#00FFD1]/20 text-[#00FFD1] rounded-none">
+                          {vouch.author?.username?.charAt(0) || '?'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="text-white font-medium">{vouch.author?.username || 'Anonymous'}</p>
+                        <p className="text-white/40 text-sm">
+                          {vouch.timestamp ? new Date(vouch.timestamp).toLocaleDateString() : 'Discord Member'}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            <div className="text-center mt-12">
+              <Button
+                variant="ghost"
+                className="border border-white/20 text-white hover:bg-white hover:text-black rounded-none px-8 py-4"
+                onClick={() => window.open(discordServer.inviteUrl, '_blank')}
+              >
+                View More on Discord
+              </Button>
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* How It Works Section */}
-      <section className="py-24 bg-[#121212]/50">
+      <section className="py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-semibold text-white mb-6">How It Works</h2>
@@ -147,7 +223,7 @@ const HomePage = () => {
           <div className="grid md:grid-cols-4 gap-8">
             {[
               { step: '01', icon: Users, title: 'Login', desc: 'Sign in with your Discord account' },
-              { step: '02', icon: Crown, title: 'Select', desc: 'Choose your service and package' },
+              { step: '02', icon: Crown, title: 'Select', desc: 'Choose your service and character' },
               { step: '03', icon: Clock, title: 'Pay', desc: 'Complete secure checkout' },
               { step: '04', icon: Star, title: 'Relax', desc: 'Track progress in your dashboard' },
             ].map((item, index) => (
