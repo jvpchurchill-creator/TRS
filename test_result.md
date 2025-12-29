@@ -333,8 +333,6 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Discord Bot Stats API"
-    - "Discord Bot Vouches API"
     - "Homepage with Stats and Vouches"
   stuck_tasks: []
   test_all: false
