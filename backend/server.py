@@ -721,14 +721,62 @@ app.add_middleware(
 )
 
 # ============== DISCORD INTERACTIONS ==============
+from fastapi import Request
+from nacl.signing import VerifyKey
+from nacl.exceptions import BadSignatureError
+
+# Discord public key for signature verification
+DISCORD_PUBLIC_KEY = os.environ.get('DISCORD_PUBLIC_KEY', '')
+
+def verify_discord_signature(signature: str, timestamp: str, body: bytes) -> bool:
+    """Verify Discord interaction signature"""
+    if not DISCORD_PUBLIC_KEY:
+        logger.warning("DISCORD_PUBLIC_KEY not set, skipping verification")
+        return True  # Skip verification if key not set (for testing)
+    
+    try:
+        verify_key = VerifyKey(bytes.fromhex(DISCORD_PUBLIC_KEY))
+        verify_key.verify(f"{timestamp}{body.decode('utf-8')}".encode(), bytes.fromhex(signature))
+        return True
+    except BadSignatureError:
+        logger.error("Invalid Discord signature")
+        return False
+    except Exception as e:
+        logger.error(f"Signature verification error: {e}")
+        return False
 
 @app.post("/api/discord/interactions")
-async def discord_interactions(request_body: dict):
+async def discord_interactions(request: Request):
     """
     Handle Discord slash command interactions
-    This endpoint receives interactions from Discord when users use slash commands
+    Verifies signature and responds to PING/commands
     """
-    return await handle_interaction(request_body)
+    # Get headers for signature verification
+    signature = request.headers.get("X-Signature-Ed25519", "")
+    timestamp = request.headers.get("X-Signature-Timestamp", "")
+    
+    # Get raw body
+    body = await request.body()
+    
+    # Verify signature
+    if not verify_discord_signature(signature, timestamp, body):
+        raise HTTPException(status_code=401, detail="Invalid request signature")
+    
+    # Parse JSON body
+    try:
+        interaction_data = await request.json()
+    except:
+        raise HTTPException(status_code=400, detail="Invalid JSON")
+    
+    interaction_type = interaction_data.get("type")
+    
+    # Type 1 = PING - respond with PONG for verification
+    if interaction_type == 1:
+        logger.info("Received Discord PING, responding with PONG")
+        return {"type": 1}
+    
+    # Handle other interaction types
+    return await handle_interaction(interaction_data)
 
 @api_router.post("/tickets/{channel_id}/close")
 async def close_ticket(channel_id: str, authorization: Optional[str] = Header(None)):
