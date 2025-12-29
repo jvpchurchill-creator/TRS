@@ -428,9 +428,13 @@ async def update_order(order_id: str, order_update: OrderUpdate, authorization: 
         raise HTTPException(status_code=404, detail="Order not found")
     
     update_data = {"updated_at": datetime.utcnow()}
+    status_changed = False
+    old_status = order.get("status")
     
     if order_update.status is not None:
         update_data["status"] = order_update.status
+        if order_update.status != old_status:
+            status_changed = True
     if order_update.progress is not None:
         update_data["progress"] = order_update.progress
     if order_update.notes is not None:
@@ -444,6 +448,31 @@ async def update_order(order_id: str, order_update: OrderUpdate, authorization: 
             update_data["booster_username"] = booster["username"]
     
     await db.orders.update_one({"id": order_id}, {"$set": update_data})
+    
+    # Send Discord notification if status changed
+    if status_changed and order.get("ticket_channel_id"):
+        try:
+            status_emoji = {"pending": "⏳", "in_progress": "🔄", "completed": "✅"}
+            status_display = {"pending": "Pending", "in_progress": "In Progress", "completed": "Completed"}
+            new_status = order_update.status
+            
+            embed = {
+                "title": f"{status_emoji.get(new_status, '📋')} Order Status Updated",
+                "color": 65489 if new_status == "completed" else 16776960,
+                "fields": [
+                    {"name": "New Status", "value": status_display.get(new_status, new_status), "inline": True},
+                    {"name": "Progress", "value": f"{order_update.progress or order.get('progress', 0)}%", "inline": True}
+                ],
+                "footer": {"text": f"Updated by {user['username']}"},
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+            if order_update.notes:
+                embed["fields"].append({"name": "Notes", "value": order_update.notes[:200], "inline": False})
+            
+            await send_ticket_update(order["ticket_channel_id"], "", embed)
+        except Exception as e:
+            logger.error(f"Failed to send Discord update: {e}")
     
     updated_order = await db.orders.find_one({"id": order_id})
     return updated_order
