@@ -569,6 +569,18 @@ async def get_services():
     """Get all service types"""
     return SERVICE_TYPES
 
+@api_router.get("/vouches")
+async def get_vouches(limit: int = Query(20, ge=1, le=50)):
+    """Get vouches/feedback from Discord channel"""
+    vouches = await fetch_vouches(limit)
+    return vouches
+
+@api_router.get("/discord/info")
+async def get_discord_info():
+    """Get Discord server info"""
+    info = await get_guild_info()
+    return info or {"name": "The Rival Syndicate", "icon": None}
+
 @api_router.get("/characters")
 async def get_all_characters():
     """Get all characters grouped by class"""
