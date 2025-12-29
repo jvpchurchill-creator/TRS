@@ -325,7 +325,8 @@ const ServicesPage = () => {
                     <Button
                       key={method.id}
                       onClick={() => handlePayment(method)}
-                      className="w-full bg-white/5 hover:bg-[#00FFD1] hover:text-black text-white border border-white/10 hover:border-[#00FFD1] rounded-none py-6 justify-between"
+                      disabled={creating}
+                      className="w-full bg-white/5 hover:bg-[#00FFD1] hover:text-black text-white border border-white/10 hover:border-[#00FFD1] rounded-none py-6 justify-between disabled:opacity-50"
                     >
                       <span className="flex items-center gap-3">
                         <Icon className="w-5 h-5" />
