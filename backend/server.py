@@ -622,13 +622,13 @@ async def get_stats():
     guild_info = await get_guild_info()
     orders_count = await get_orders_count()
     
-    # Get booster count from database
-    booster_count = await db.users.count_documents({"role": {"$in": ["booster", "admin"]}})
+    # Get active boosters count from Discord roles
+    booster_count = await get_active_boosters_count()
     
     return {
         "orders_completed": orders_count,
         "server_members": guild_info.get("member_count", 0) if guild_info else 0,
-        "active_boosters": booster_count if booster_count > 0 else 45,
+        "active_boosters": booster_count if booster_count > 0 else 0,
         "average_rating": 4.9
     }
 
