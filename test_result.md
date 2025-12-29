@@ -146,15 +146,18 @@ backend:
 
   - task: "Orders CRUD API"
     implemented: true
-    working: "NA"
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "POST /api/orders creates order. GET /api/orders gets user orders. GET /api/orders/{id} gets specific order. PATCH /api/orders/{id} updates order."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: All order endpoints properly require authentication (return 401 without token). POST /api/orders accepts proper order data structure. Authentication middleware working correctly."
 
   - task: "Admin Orders API"
     implemented: true
