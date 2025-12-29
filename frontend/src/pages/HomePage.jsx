@@ -33,10 +33,6 @@ const HomePage = () => {
         // Fetch stats
         const statsRes = await axios.get(`${API}/stats`);
         setStats(statsRes.data);
-        
-        // Fetch exchange rates
-        const ratesRes = await axios.get(`${API}/currency/rates`);
-        setExchangeRates(ratesRes.data.rates || {});
       } catch (error) {
         console.error('Failed to fetch data:', error);
       } finally {
@@ -45,15 +41,6 @@ const HomePage = () => {
     };
     fetchData();
   }, []);
-
-  const handleCurrencyChange = (newCurrency) => {
-    setCurrency(newCurrency);
-    localStorage.setItem('selectedCurrency', newCurrency);
-    // Dispatch event for other components to listen
-    window.dispatchEvent(new CustomEvent('currencyChange', { detail: newCurrency }));
-  };
-
-  const currentCurrencyData = CURRENCIES.find(c => c.code === currency) || CURRENCIES[0];
 
   const trustPoints = [
     { icon: Zap, title: 'Fast Delivery', description: 'Most orders completed within 24-48 hours' },
