@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Sword, Shield, Brain, CreditCard, DollarSign, Wallet, Crown, Zap, Check, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Sword, Shield, Brain, CreditCard, DollarSign, Wallet, Crown, Zap, Check, ExternalLink, ChevronDown } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger } from '../components/ui/tabs';
 import { 
   Dialog, 
   DialogContent, 
@@ -11,6 +11,12 @@ import {
   DialogHeader, 
   DialogTitle,
 } from '../components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
 import { characters, characterClasses, serviceTypes, paymentMethods, discordServer } from '../data/mock';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
@@ -31,6 +37,23 @@ const paymentIcons = {
   Wallet: Wallet
 };
 
+// Currency data
+const CURRENCIES = [
+  { code: 'USD', symbol: '$', name: 'US Dollar' },
+  { code: 'EUR', symbol: '€', name: 'Euro' },
+  { code: 'GBP', symbol: '£', name: 'British Pound' },
+  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+  { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+  { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+  { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
+  { code: 'MXN', symbol: 'MX$', name: 'Mexican Peso' },
+  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+  { code: 'KRW', symbol: '₩', name: 'Korean Won' },
+  { code: 'PHP', symbol: '₱', name: 'Philippine Peso' },
+  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
+];
+
 const ServicesPage = () => {
   const { isAuthenticated, login, token, loading } = useAuth();
   const [selectedClass, setSelectedClass] = useState('duelist');
@@ -38,7 +61,58 @@ const ServicesPage = () => {
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [currency, setCurrency] = useState(() => {
+    return localStorage.getItem('selectedCurrency') || 'USD';
+  });
+  const [exchangeRates, setExchangeRates] = useState({ USD: 1 });
 
+  useEffect(() => {
+    // Fetch exchange rates
+    const fetchRates = async () => {
+      try {
+        const response = await axios.get(`${API}/currency/rates`);
+        setExchangeRates(response.data.rates || { USD: 1 });
+      } catch (error) {
+        console.error('Failed to fetch exchange rates:', error);
+      }
+    };
+    fetchRates();
+
+    // Listen for currency changes from other pages
+    const handleCurrencyChange = (event) => {
+      setCurrency(event.detail);
+    };
+    window.addEventListener('currencyChange', handleCurrencyChange);
+    return () => window.removeEventListener('currencyChange', handleCurrencyChange);
+  }, []);
+
+  const handleCurrencyChange = (newCurrency) => {
+    setCurrency(newCurrency);
+    localStorage.setItem('selectedCurrency', newCurrency);
+    window.dispatchEvent(new CustomEvent('currencyChange', { detail: newCurrency }));
+  };
+
+  const convertPrice = (usdPrice) => {
+    const rate = exchangeRates[currency] || 1;
+    const converted = usdPrice * rate;
+    // Round based on currency
+    if (['JPY', 'KRW', 'INR', 'PHP'].includes(currency)) {
+      return Math.round(converted);
+    }
+    return Math.round(converted * 100) / 100;
+  };
+
+  const formatPrice = (price) => {
+    const currencyData = CURRENCIES.find(c => c.code === currency) || CURRENCIES[0];
+    const converted = convertPrice(price);
+    
+    if (['JPY', 'KRW'].includes(currency)) {
+      return `${currencyData.symbol}${converted.toLocaleString()}`;
+    }
+    return `${currencyData.symbol}${converted.toFixed(2)}`;
+  };
+
+  const currentCurrencyData = CURRENCIES.find(c => c.code === currency) || CURRENCIES[0];
   const serviceType = serviceTypes.find(s => s.id === selectedServiceType);
   const currentCharacters = characters[selectedClass] || [];
 
@@ -65,14 +139,14 @@ const ServicesPage = () => {
     setCreating(true);
     
     try {
-      // Create order in backend
+      // Create order in backend (always in USD)
       const orderData = {
         service_type: selectedServiceType,
         character_id: selectedCharacter.id,
         character_name: selectedCharacter.name,
         character_class: selectedClass,
         character_icon: selectedCharacter.icon,
-        price: getPrice(selectedCharacter.basePrice),
+        price: getPrice(selectedCharacter.basePrice), // USD price
         payment_method: paymentMethod.id
       };
       
@@ -97,6 +171,35 @@ const ServicesPage = () => {
 
   return (
     <div className="bg-black min-h-screen">
+      {/* Currency Selector - Fixed Position */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline" 
+              className="bg-[#121212] border-white/20 text-white hover:bg-[#00FFD1] hover:text-black hover:border-[#00FFD1] rounded-none px-4 py-2"
+            >
+              <span className="mr-2">{currentCurrencyData.symbol}</span>
+              {currency}
+              <ChevronDown className="w-4 h-4 ml-2" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-[#121212] border-white/10 rounded-none max-h-[300px] overflow-y-auto">
+            {CURRENCIES.map((curr) => (
+              <DropdownMenuItem
+                key={curr.code}
+                onClick={() => handleCurrencyChange(curr.code)}
+                className={`cursor-pointer ${currency === curr.code ? 'bg-[#00FFD1]/20 text-[#00FFD1]' : 'text-white hover:bg-white/10'}`}
+              >
+                <span className="w-8">{curr.symbol}</span>
+                <span className="flex-1">{curr.code}</span>
+                <span className="text-white/40 text-sm">{curr.name}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {/* Hero */}
       <section className="py-16 border-b border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -138,7 +241,7 @@ const ServicesPage = () => {
                       <p className="text-white/60 text-sm mb-2">{service.description}</p>
                       {service.priceModifier > 0 && (
                         <Badge className="bg-[#00FFD1]/20 text-[#00FFD1] rounded-none">
-                          +${service.priceModifier} on base price
+                          +{formatPrice(service.priceModifier)} on base price
                         </Badge>
                       )}
                     </div>
@@ -184,7 +287,7 @@ const ServicesPage = () => {
             <p className="text-white/60">
               {selectedServiceType === 'priority-farm' 
                 ? 'Base prices shown - You do the farm'
-                : 'Prices include +$10 boosting fee - We do the farm for you'
+                : `Prices include +${formatPrice(10)} boosting fee - We do the farm for you`
               }
             </p>
           </div>
@@ -224,11 +327,11 @@ const ServicesPage = () => {
                       {character.name}
                     </h3>
                     <div className="text-[#00FFD1] font-bold text-lg">
-                      ${finalPrice}
+                      {formatPrice(finalPrice)}
                     </div>
                     {selectedServiceType === 'lord-boosting' && (
                       <div className="text-white/40 text-xs mt-1">
-                        (base ${character.basePrice} + $10)
+                        (base {formatPrice(character.basePrice)} + {formatPrice(10)})
                       </div>
                     )}
                   </CardContent>
@@ -244,7 +347,7 @@ const ServicesPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8">
             <h2 className="text-2xl font-semibold text-white mb-2">Payment Methods</h2>
-            <p className="text-white/60">We accept the following payment options</p>
+            <p className="text-white/60">We accept the following payment options (prices in USD)</p>
           </div>
           <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
             {paymentMethods.map((method) => {
@@ -310,20 +413,27 @@ const ServicesPage = () => {
               <div className="p-4 bg-black/50 border border-white/10">
                 <div className="flex justify-between items-center">
                   <span className="text-white font-semibold">Total</span>
-                  <span className="text-[#00FFD1] font-bold text-2xl">
-                    ${getPrice(selectedCharacter.basePrice)}
-                  </span>
+                  <div className="text-right">
+                    <span className="text-[#00FFD1] font-bold text-2xl">
+                      {formatPrice(getPrice(selectedCharacter.basePrice))}
+                    </span>
+                    {currency !== 'USD' && (
+                      <p className="text-white/40 text-sm">
+                        (${getPrice(selectedCharacter.basePrice)} USD)
+                      </p>
+                    )}
+                  </div>
                 </div>
                 {selectedServiceType === 'lord-boosting' && (
-                  <p className="text-white/40 text-sm text-right">
-                    (base ${selectedCharacter.basePrice} + $10 boosting)
+                  <p className="text-white/40 text-sm text-right mt-1">
+                    (base {formatPrice(selectedCharacter.basePrice)} + {formatPrice(10)} boosting)
                   </p>
                 )}
               </div>
 
               {/* Payment Options */}
               <div className="space-y-3">
-                <h4 className="text-white font-medium">Select Payment Method</h4>
+                <h4 className="text-white font-medium">Select Payment Method (USD)</h4>
                 {paymentMethods.map((method) => {
                   const Icon = paymentIcons[method.icon];
                   return (
@@ -403,7 +513,7 @@ const ServicesPage = () => {
                 </li>
                 <li className="flex items-start gap-3 text-white/80">
                   <Check className="w-5 h-5 text-[#00FFD1] flex-shrink-0 mt-0.5" />
-                  +$10 on base price per character
+                  +{formatPrice(10)} on base price per character
                 </li>
                 <li className="flex items-start gap-3 text-white/80">
                   <Check className="w-5 h-5 text-[#00FFD1] flex-shrink-0 mt-0.5" />
