@@ -14,6 +14,10 @@ import {
 import { characters, characterClasses, serviceTypes, paymentMethods, discordServer } from '../data/mock';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
+import axios from 'axios';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const classIcons = {
   duelist: Sword,
