@@ -720,6 +720,56 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ============== DISCORD INTERACTIONS ==============
+
+@app.post("/api/discord/interactions")
+async def discord_interactions(request_body: dict):
+    """
+    Handle Discord slash command interactions
+    This endpoint receives interactions from Discord when users use slash commands
+    """
+    return await handle_interaction(request_body)
+
+@api_router.post("/tickets/{channel_id}/close")
+async def close_ticket(channel_id: str, authorization: Optional[str] = Header(None)):
+    """Close a ticket channel (admin/booster only)"""
+    user = await get_current_user(authorization)
+    require_admin_or_booster(user)
+    
+    success = await close_ticket_channel(channel_id, user["username"])
+    
+    if success:
+        # Update order status if we can find it
+        order = await db.orders.find_one({"ticket_channel_id": channel_id})
+        if order:
+            await db.orders.update_one(
+                {"id": order["id"]},
+                {"$set": {"status": "completed", "updated_at": datetime.utcnow()}}
+            )
+        
+        return {"success": True, "message": "Ticket closed successfully"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to close ticket")
+
+@api_router.post("/discord/register-commands")
+async def register_commands(authorization: Optional[str] = Header(None)):
+    """Register Discord slash commands (admin only)"""
+    user = await get_current_user(authorization)
+    require_admin(user)
+    
+    success = await register_slash_commands()
+    
+    if success:
+        return {"success": True, "message": "Slash commands registered successfully"}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to register commands")
+
+@app.on_event("startup")
+async def startup_event():
+    """Register Discord slash commands on startup"""
+    logger.info("Registering Discord slash commands...")
+    await register_slash_commands()
+
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
