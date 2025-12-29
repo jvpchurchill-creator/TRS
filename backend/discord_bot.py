@@ -510,10 +510,15 @@ async def handle_interaction(interaction_data: dict) -> dict:
         member = interaction_data.get("member", {})
         user = member.get("user", {})
         member_roles = member.get("roles", [])
+        member_permissions = int(member.get("permissions", 0))
         
-        # Check if user has booster/admin role
+        # Check if user has booster role OR admin permissions
+        # Admin permission bit = 0x8 (ADMINISTRATOR)
         booster_role_ids = [r.strip() for r in config['booster_role_ids'] if r.strip()]
-        has_permission = any(role in member_roles for role in booster_role_ids)
+        has_booster_role = any(role in member_roles for role in booster_role_ids)
+        has_admin_perms = (member_permissions & 0x8) == 0x8
+        
+        has_permission = has_booster_role or has_admin_perms
         
         if not has_permission:
             return {
