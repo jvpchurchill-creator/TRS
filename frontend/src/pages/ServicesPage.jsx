@@ -136,6 +136,11 @@ const ServicesPage = () => {
   };
 
   const handlePayment = async (paymentMethod) => {
+    if (!token) {
+      toast.error('Please login first to place an order.');
+      return;
+    }
+    
     setCreating(true);
     
     try {
@@ -163,7 +168,11 @@ const ServicesPage = () => {
       setCheckoutOpen(false);
     } catch (error) {
       console.error('Failed to create order:', error);
-      toast.error('Failed to create order. Please try again.');
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please login again.');
+      } else {
+        toast.error('Failed to create order. Please try again.');
+      }
     } finally {
       setCreating(false);
     }
