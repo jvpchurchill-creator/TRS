@@ -1,15 +1,9 @@
 import React, { Suspense, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Crown, Zap, Shield, MessageCircle, Users, Star, Clock, Quote, ChevronDown } from 'lucide-react';
+import { ArrowRight, Crown, Zap, Shield, MessageCircle, Users, Star, Clock, Quote } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '../components/ui/dropdown-menu';
 import { discordServer } from '../data/mock';
 import axios from 'axios';
 
@@ -18,23 +12,6 @@ const API = `${BACKEND_URL}/api`;
 
 // Lazy load Spline for performance
 const Spline = React.lazy(() => import('@splinetool/react-spline'));
-
-// Currency symbols and names
-const CURRENCIES = [
-  { code: 'USD', symbol: '$', name: 'US Dollar' },
-  { code: 'EUR', symbol: '€', name: 'Euro' },
-  { code: 'GBP', symbol: '£', name: 'British Pound' },
-  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
-  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
-  { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-  { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
-  { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
-  { code: 'MXN', symbol: 'MX$', name: 'Mexican Peso' },
-  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
-  { code: 'KRW', symbol: '₩', name: 'Korean Won' },
-  { code: 'PHP', symbol: '₱', name: 'Philippine Peso' },
-  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
-];
 
 const HomePage = () => {
   const [vouches, setVouches] = useState([]);
@@ -45,10 +22,6 @@ const HomePage = () => {
     active_boosters: 45,
     average_rating: 4.9
   });
-  const [currency, setCurrency] = useState(() => {
-    return localStorage.getItem('selectedCurrency') || 'USD';
-  });
-  const [exchangeRates, setExchangeRates] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
