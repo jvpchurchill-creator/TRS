@@ -7,19 +7,30 @@ import httpx
 import logging
 from typing import Optional, List, Dict
 from datetime import datetime
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables
+ROOT_DIR = Path(__file__).parent
+load_dotenv(ROOT_DIR / '.env')
 
 logger = logging.getLogger(__name__)
 
 DISCORD_API = "https://discord.com/api/v10"
-BOT_TOKEN = os.environ.get('DISCORD_BOT_TOKEN')
-GUILD_ID = os.environ.get('DISCORD_GUILD_ID')
-TICKET_CATEGORY_ID = os.environ.get('DISCORD_TICKET_CATEGORY_ID')
-VOUCHES_CHANNEL_ID = os.environ.get('DISCORD_VOUCHES_CHANNEL_ID')
-ORDERS_CHANNEL_ID = os.environ.get('DISCORD_ORDERS_CHANNEL_ID')
+
+def get_config():
+    return {
+        "bot_token": os.environ.get('DISCORD_BOT_TOKEN'),
+        "guild_id": os.environ.get('DISCORD_GUILD_ID'),
+        "ticket_category_id": os.environ.get('DISCORD_TICKET_CATEGORY_ID'),
+        "vouches_channel_id": os.environ.get('DISCORD_VOUCHES_CHANNEL_ID'),
+        "orders_channel_id": os.environ.get('DISCORD_ORDERS_CHANNEL_ID')
+    }
 
 def get_headers():
+    config = get_config()
     return {
-        "Authorization": f"Bot {BOT_TOKEN}",
+        "Authorization": f"Bot {config['bot_token']}",
         "Content-Type": "application/json"
     }
 
