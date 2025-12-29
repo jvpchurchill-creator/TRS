@@ -203,12 +203,14 @@ async def discord_login():
 @api_router.get("/auth/discord/callback")
 async def discord_callback(code: str = None, error: str = None):
     """Handle Discord OAuth callback"""
+    FRONTEND_URL = "https://rival-syndicate.preview.emergentagent.com"
+    
     if error:
         logger.error(f"Discord OAuth error: {error}")
-        raise HTTPException(status_code=400, detail=f"Discord OAuth error: {error}")
+        return RedirectResponse(url=f"{FRONTEND_URL}/?error={error}")
     
     if not code:
-        raise HTTPException(status_code=400, detail="No authorization code provided")
+        return RedirectResponse(url=f"{FRONTEND_URL}/?error=no_code")
     
     try:
         # Exchange code for access token
@@ -227,7 +229,7 @@ async def discord_callback(code: str = None, error: str = None):
             
             if token_response.status_code != 200:
                 logger.error(f"Token exchange failed: {token_response.text}")
-                raise HTTPException(status_code=400, detail="Failed to exchange code for token")
+                return RedirectResponse(url=f"{FRONTEND_URL}/?error=token_exchange_failed")
             
             token_data = token_response.json()
             discord_access_token = token_data.get("access_token")
@@ -240,7 +242,7 @@ async def discord_callback(code: str = None, error: str = None):
             
             if user_response.status_code != 200:
                 logger.error(f"Failed to get user info: {user_response.text}")
-                raise HTTPException(status_code=400, detail="Failed to get user info from Discord")
+                return RedirectResponse(url=f"{FRONTEND_URL}/?error=user_info_failed")
             
             discord_user = user_response.json()
             
@@ -276,25 +278,26 @@ async def discord_callback(code: str = None, error: str = None):
         # Create JWT token
         access_token = create_access_token({"user_id": user["id"], "discord_id": user["discord_id"]})
         
-        return {
-            "success": True,
-            "user": {
-                "id": user["id"],
-                "discord_id": user["discord_id"],
-                "username": user["username"],
-                "discriminator": user.get("discriminator", ""),
-                "avatar": user.get("avatar"),
-                "role": user.get("role", "client"),
-                "created_at": user.get("created_at", datetime.utcnow()).isoformat() if isinstance(user.get("created_at"), datetime) else user.get("created_at")
-            },
-            "access_token": access_token
+        # Redirect to frontend with token in URL fragment
+        # The frontend will extract and store the token
+        import urllib.parse
+        user_data = {
+            "id": user["id"],
+            "discord_id": user["discord_id"],
+            "username": user["username"],
+            "discriminator": user.get("discriminator", ""),
+            "avatar": user.get("avatar"),
+            "role": user.get("role", "client")
         }
+        user_json = urllib.parse.quote(str(user_data).replace("'", '"'))
         
-    except HTTPException:
-        raise
+        return RedirectResponse(
+            url=f"{FRONTEND_URL}/auth/callback?token={access_token}&user={user_json}"
+        )
+        
     except Exception as e:
         logger.error(f"Discord callback error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        return RedirectResponse(url=f"{FRONTEND_URL}/?error=server_error")
 
 @api_router.get("/auth/me")
 async def get_me(authorization: str = None):
