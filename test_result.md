@@ -101,3 +101,170 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Build The Rival Syndicate - a Marvel Rivals boosting/farming service website with Discord OAuth login, character-based pricing, order management, and payment integration (PayPal, Cash App, Venmo)."
+
+backend:
+  - task: "API Root & Health Check"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "GET /api/ returns message and status"
+
+  - task: "Discord OAuth Login"
+    implemented: true
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "GET /api/auth/discord/login redirects to Discord OAuth. GET /api/auth/discord/callback handles code exchange."
+
+  - task: "Services API"
+    implemented: true
+    working: true
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "GET /api/services returns service types. GET /api/characters returns all characters. GET /api/characters/{class} returns characters by class."
+
+  - task: "Orders CRUD API"
+    implemented: true
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "POST /api/orders creates order. GET /api/orders gets user orders. GET /api/orders/{id} gets specific order. PATCH /api/orders/{id} updates order."
+
+  - task: "Admin Orders API"
+    implemented: true
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "GET /api/admin/orders returns all orders (admin/booster only). GET /api/admin/boosters returns booster list."
+
+  - task: "User Role Management"
+    implemented: true
+    working: "NA"
+    file: "server.py"
+    stuck_count: 0
+    priority: "medium"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "PATCH /api/users/{id}/role updates user role (admin only). GET /api/users gets all users (admin only)."
+
+frontend:
+  - task: "Homepage with Spline 3D"
+    implemented: true
+    working: true
+    file: "pages/HomePage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Homepage displays hero section with 3D Spline animation, stats, trust points, how it works section."
+
+  - task: "Services Page with Character Grid"
+    implemented: true
+    working: true
+    file: "pages/ServicesPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "Services page shows service type selector, character class tabs, character grid with icons and pricing, checkout dialog with payment methods."
+
+  - task: "FAQ Page"
+    implemented: true
+    working: true
+    file: "pages/FAQPage.jsx"
+    stuck_count: 0
+    priority: "low"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "main"
+        comment: "FAQ page with accordion-style questions and answers."
+
+  - task: "Dashboard Page"
+    implemented: true
+    working: "NA"
+    file: "pages/DashboardPage.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Dashboard shows user orders with progress bars, status badges, and booster info. Integrated with backend API."
+
+  - task: "Admin Dashboard"
+    implemented: true
+    working: "NA"
+    file: "pages/AdminDashboard.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Admin dashboard shows all orders table, stats, filters, and edit functionality. Integrated with backend API."
+
+  - task: "Discord OAuth Flow"
+    implemented: true
+    working: "NA"
+    file: "context/AuthContext.js, pages/AuthCallback.jsx"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Auth flow redirects to Discord, handles callback, stores token in localStorage."
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Discord OAuth Login"
+    - "Orders CRUD API"
+    - "Admin Orders API"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "Backend implementation complete with Discord OAuth, orders CRUD, admin endpoints. Frontend integrated with real API calls. Please test: 1) Discord OAuth login flow (redirect and callback), 2) Orders API (create, get, update), 3) Admin endpoints (get all orders, boosters). Discord credentials are configured in backend/.env."
