@@ -10,6 +10,20 @@ export const mockUser = {
   createdAt: new Date().toISOString()
 };
 
+// Discord Server Info
+export const discordServer = {
+  id: "1389850246439370802",
+  name: "The Rival Syndicate",
+  icon: "https://customer-assets.emergentagent.com/job_rival-syndicate/artifacts/9k8acf1z_image.png",
+  inviteUrl: "https://discord.gg/rivalsyndicate"
+};
+
+// Site Logo
+export const siteLogo = "https://customer-assets.emergentagent.com/job_rival-syndicate/artifacts/9k8acf1z_image.png";
+
+// Base URL for character icons
+const ICON_BASE = "https://rivalskins.com/wp-content/uploads/marvel-assets/assets/lord-icons/";
+
 // Service Types
 export const serviceTypes = [
   { id: "priority-farm", name: "Priority Farm", description: "We host the farm, you do the work", priceModifier: 0 },
@@ -23,58 +37,58 @@ export const characterClasses = [
   { id: "strategist", name: "Strategist", icon: "Brain", color: "#A78BFA" }
 ];
 
-// All Characters with base prices
+// All Characters with base prices and icons
 export const characters = {
   duelist: [
-    { id: "hela", name: "Hela", basePrice: 25 },
-    { id: "hawkeye", name: "Hawkeye", basePrice: 25 },
-    { id: "iron-fist", name: "Iron Fist", basePrice: 30 },
-    { id: "magik", name: "Magik", basePrice: 25 },
-    { id: "mr-fantastic", name: "Mr. Fantastic", basePrice: 40 },
-    { id: "black-panther", name: "Black Panther", basePrice: 20 },
-    { id: "blade", name: "Blade", basePrice: 25 },
-    { id: "black-widow", name: "Black Widow", basePrice: 20 },
-    { id: "daredevil", name: "Daredevil", basePrice: 30 },
-    { id: "human-torch", name: "Human Torch", basePrice: 20 },
-    { id: "iron-man", name: "Iron Man", basePrice: 20 },
-    { id: "moon-knight", name: "Moon Knight", basePrice: 20 },
-    { id: "namor", name: "Namor", basePrice: 20 },
-    { id: "phoenix", name: "Phoenix", basePrice: 20 },
-    { id: "spider-man", name: "Spider-Man", basePrice: 25 },
-    { id: "psylocke", name: "Psylocke", basePrice: 25 },
-    { id: "scarlet-witch", name: "Scarlet Witch", basePrice: 20 },
-    { id: "squirrel-girl", name: "Squirrel Girl", basePrice: 20 },
-    { id: "star-lord", name: "Star-Lord", basePrice: 30 },
-    { id: "storm", name: "Storm", basePrice: 25 },
-    { id: "punisher", name: "Punisher", basePrice: 20 },
-    { id: "winter-soldier", name: "Winter Soldier", basePrice: 20 },
-    { id: "wolverine", name: "Wolverine", basePrice: 20 }
+    { id: "hela", name: "Hela", basePrice: 25, icon: `${ICON_BASE}Hela%20Deluxe%20Avatar.png` },
+    { id: "hawkeye", name: "Hawkeye", basePrice: 25, icon: `${ICON_BASE}Hawkeye%20Deluxe%20Avatar.png` },
+    { id: "iron-fist", name: "Iron Fist", basePrice: 30, icon: `${ICON_BASE}Iron%20Fist%20Deluxe%20Avatar.png` },
+    { id: "magik", name: "Magik", basePrice: 25, icon: `${ICON_BASE}Magik%20Deluxe%20Avatar.png` },
+    { id: "mr-fantastic", name: "Mr. Fantastic", basePrice: 40, icon: `${ICON_BASE}Mister%20Fantastic%20Deluxe%20Avatar.png` },
+    { id: "black-panther", name: "Black Panther", basePrice: 20, icon: `${ICON_BASE}Black%20Panther%20Deluxe%20Avatar.png` },
+    { id: "blade", name: "Blade", basePrice: 25, icon: `${ICON_BASE}Blade%20Deluxe%20Avatar.png` },
+    { id: "black-widow", name: "Black Widow", basePrice: 20, icon: `${ICON_BASE}Black%20Widow%20Deluxe%20Avatar.png` },
+    { id: "daredevil", name: "Daredevil", basePrice: 30, icon: `${ICON_BASE}Daredevil%20Deluxe%20Avatar.png` },
+    { id: "human-torch", name: "Human Torch", basePrice: 20, icon: `${ICON_BASE}Human%20Torch%20Deluxe%20Avatar.png` },
+    { id: "iron-man", name: "Iron Man", basePrice: 20, icon: `${ICON_BASE}Iron%20Man%20Deluxe%20Avatar.png` },
+    { id: "moon-knight", name: "Moon Knight", basePrice: 20, icon: `${ICON_BASE}Moon%20Knight%20Deluxe%20Avatar.png` },
+    { id: "namor", name: "Namor", basePrice: 20, icon: `${ICON_BASE}Namor%20Deluxe%20Avatar.png` },
+    { id: "phoenix", name: "Phoenix", basePrice: 20, icon: `${ICON_BASE}Phoenix%20Deluxe%20Avatar.png` },
+    { id: "spider-man", name: "Spider-Man", basePrice: 25, icon: `${ICON_BASE}Spider-Man%20Deluxe%20Avatar.png` },
+    { id: "psylocke", name: "Psylocke", basePrice: 25, icon: `${ICON_BASE}Psylocke%20Deluxe%20Avatar.png` },
+    { id: "scarlet-witch", name: "Scarlet Witch", basePrice: 20, icon: `${ICON_BASE}Scarlet%20Witch%20Deluxe%20Avatar.png` },
+    { id: "squirrel-girl", name: "Squirrel Girl", basePrice: 20, icon: `${ICON_BASE}Squirrel%20Girl%20Deluxe%20Avatar.png` },
+    { id: "star-lord", name: "Star-Lord", basePrice: 30, icon: `${ICON_BASE}Star-Lord%20Deluxe%20Avatar.png` },
+    { id: "storm", name: "Storm", basePrice: 25, icon: `${ICON_BASE}Storm%20Deluxe%20Avatar.png` },
+    { id: "punisher", name: "Punisher", basePrice: 20, icon: `${ICON_BASE}The%20Punisher%20Deluxe%20Avatar.png` },
+    { id: "winter-soldier", name: "Winter Soldier", basePrice: 20, icon: `${ICON_BASE}Winter%20Soldier%20Deluxe%20Avatar.png` },
+    { id: "wolverine", name: "Wolverine", basePrice: 20, icon: `${ICON_BASE}Wolverine%20Deluxe%20Avatar.png` }
   ],
   vanguard: [
-    { id: "thor", name: "Thor", basePrice: 40 },
-    { id: "venom", name: "Venom", basePrice: 40 },
-    { id: "dr-strange", name: "Dr. Strange", basePrice: 40 },
-    { id: "angela", name: "Angela", basePrice: 25 },
-    { id: "thing", name: "Thing", basePrice: 25 },
-    { id: "hulk", name: "Hulk", basePrice: 25 },
-    { id: "groot", name: "Groot", basePrice: 40 },
-    { id: "emma-frost", name: "Emma Frost", basePrice: 25 },
-    { id: "peni-parker", name: "Peni Parker", basePrice: 25 },
-    { id: "captain-america", name: "Captain America", basePrice: 30 },
-    { id: "magneto", name: "Magneto", basePrice: 40 },
-    { id: "rogue", name: "Rogue", basePrice: 25 }
+    { id: "thor", name: "Thor", basePrice: 40, icon: `${ICON_BASE}Thor%20Deluxe%20Avatar.png` },
+    { id: "venom", name: "Venom", basePrice: 40, icon: `${ICON_BASE}Venom%20Deluxe%20Avatar.png` },
+    { id: "dr-strange", name: "Dr. Strange", basePrice: 40, icon: `${ICON_BASE}Doctor%20Strange%20Deluxe%20Avatar.png` },
+    { id: "angela", name: "Angela", basePrice: 25, icon: `${ICON_BASE}Angela%20Deluxe%20Avatar.png` },
+    { id: "thing", name: "Thing", basePrice: 25, icon: `${ICON_BASE}The%20Thing%20Deluxe%20Avatar.png` },
+    { id: "hulk", name: "Hulk", basePrice: 25, icon: `${ICON_BASE}Hero%20Hulk%20Deluxe%20Avatar.png` },
+    { id: "groot", name: "Groot", basePrice: 40, icon: `${ICON_BASE}Groot%20Deluxe%20Avatar.png` },
+    { id: "emma-frost", name: "Emma Frost", basePrice: 25, icon: `${ICON_BASE}Emma%20Frost%20Deluxe%20Avatar.png` },
+    { id: "peni-parker", name: "Peni Parker", basePrice: 25, icon: `${ICON_BASE}Peni%20Parker%20Deluxe%20Avatar.png` },
+    { id: "captain-america", name: "Captain America", basePrice: 30, icon: `${ICON_BASE}Captain%20America%20Deluxe%20Avatar.png` },
+    { id: "magneto", name: "Magneto", basePrice: 40, icon: `${ICON_BASE}Magneto%20Deluxe%20Avatar.png` },
+    { id: "rogue", name: "Rogue", basePrice: 25, icon: null }
   ],
   strategist: [
-    { id: "adam-warlock", name: "Adam Warlock", basePrice: 40 },
-    { id: "cloak-dagger", name: "Cloak & Dagger", basePrice: 25 },
-    { id: "invisible-woman", name: "Invisible Woman", basePrice: 25 },
-    { id: "jeff", name: "Jeff", basePrice: 25 },
-    { id: "loki", name: "Loki", basePrice: 30 },
-    { id: "luna-snow", name: "Luna Snow", basePrice: 25 },
-    { id: "mantis", name: "Mantis", basePrice: 40 },
-    { id: "rocket", name: "Rocket", basePrice: 20 },
-    { id: "ultron", name: "Ultron", basePrice: 40 },
-    { id: "gambit", name: "Gambit", basePrice: 40 }
+    { id: "adam-warlock", name: "Adam Warlock", basePrice: 40, icon: `${ICON_BASE}Adam%20Warlock%20Deluxe%20Avatar.png` },
+    { id: "cloak-dagger", name: "Cloak & Dagger", basePrice: 25, icon: `${ICON_BASE}Cloak%20&%20Dagger%20Deluxe%20Avatar.png` },
+    { id: "invisible-woman", name: "Invisible Woman", basePrice: 25, icon: `${ICON_BASE}Invisible%20Woman%20Deluxe%20Avatar.png` },
+    { id: "jeff", name: "Jeff", basePrice: 25, icon: `${ICON_BASE}Jeff%20the%20Land%20Shark%20Deluxe%20Avatar.png` },
+    { id: "loki", name: "Loki", basePrice: 30, icon: `${ICON_BASE}Loki%20Deluxe%20Avatar.png` },
+    { id: "luna-snow", name: "Luna Snow", basePrice: 25, icon: `${ICON_BASE}Luna%20Snow%20Deluxe%20Avatar.png` },
+    { id: "mantis", name: "Mantis", basePrice: 40, icon: `${ICON_BASE}Mantis%20Deluxe%20Avatar.png` },
+    { id: "rocket", name: "Rocket", basePrice: 20, icon: `${ICON_BASE}Rocket%20Raccoon%20Deluxe%20Avatar.png` },
+    { id: "ultron", name: "Ultron", basePrice: 40, icon: `${ICON_BASE}Ultron%20Deluxe%20Avatar.png` },
+    { id: "gambit", name: "Gambit", basePrice: 40, icon: `${ICON_BASE}Gambit%20Deluxe%20Avatar.png` }
   ]
 };
 
@@ -118,6 +132,7 @@ export const mockOrders = [
     serviceType: "lord-boosting",
     character: "Spider-Man",
     characterClass: "duelist",
+    characterIcon: `${ICON_BASE}Spider-Man%20Deluxe%20Avatar.png`,
     status: "in_progress",
     booster: { username: "ProBooster#9999", avatar: "https://cdn.discordapp.com/embed/avatars/1.png" },
     progress: 65,
@@ -132,6 +147,7 @@ export const mockOrders = [
     serviceType: "priority-farm",
     character: "Thor",
     characterClass: "vanguard",
+    characterIcon: `${ICON_BASE}Thor%20Deluxe%20Avatar.png`,
     status: "completed",
     booster: null,
     progress: 100,
@@ -146,6 +162,7 @@ export const mockOrders = [
     serviceType: "lord-boosting",
     character: "Loki",
     characterClass: "strategist",
+    characterIcon: `${ICON_BASE}Loki%20Deluxe%20Avatar.png`,
     status: "pending",
     booster: null,
     progress: 0,
@@ -165,6 +182,7 @@ export const mockAdminOrders = [
     serviceType: "lord-boosting",
     character: "Magneto",
     characterClass: "vanguard",
+    characterIcon: `${ICON_BASE}Magneto%20Deluxe%20Avatar.png`,
     status: "in_progress",
     booster: { username: "ProBooster#9999", avatar: "https://cdn.discordapp.com/embed/avatars/1.png" },
     progress: 30,
@@ -180,6 +198,7 @@ export const mockAdminOrders = [
     serviceType: "priority-farm",
     character: "Wolverine",
     characterClass: "duelist",
+    characterIcon: `${ICON_BASE}Wolverine%20Deluxe%20Avatar.png`,
     status: "pending",
     booster: null,
     progress: 0,
@@ -211,7 +230,7 @@ export const mockFAQs = [
   },
   {
     question: "What payment methods do you accept?",
-    answer: "We accept PayPal, Cash App, and Venmo. After selecting your service, you'll be redirected to complete payment through your preferred method."
+    answer: "We accept PayPal (paypal.me/mariosharpe), Cash App ($mariosharpe711), and Venmo (@msharpe711). After selecting your service, click the payment method to complete your purchase."
   },
   {
     question: "How long does Lord Boosting take?",
