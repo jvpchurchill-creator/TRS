@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Crown, Zap, Shield, MessageCircle, Users, Star, Clock } from 'lucide-react';
 import { Button } from '../components/ui/button';
-import { mockStats } from '../data/mock';
+import { mockStats, siteLogo, discordServer } from '../data/mock';
 
 // Lazy load Spline for performance
 const Spline = React.lazy(() => import('@splinetool/react-spline'));
