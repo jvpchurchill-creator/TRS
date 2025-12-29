@@ -1,10 +1,16 @@
 import React, { Suspense, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Crown, Zap, Shield, MessageCircle, Users, Star, Clock, Quote } from 'lucide-react';
+import { ArrowRight, Crown, Zap, Shield, MessageCircle, Users, Star, Clock, Quote, ChevronDown } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Card, CardContent } from '../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
-import { mockStats, discordServer } from '../data/mock';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '../components/ui/dropdown-menu';
+import { discordServer } from '../data/mock';
 import axios from 'axios';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -13,23 +19,68 @@ const API = `${BACKEND_URL}/api`;
 // Lazy load Spline for performance
 const Spline = React.lazy(() => import('@splinetool/react-spline'));
 
+// Currency symbols and names
+const CURRENCIES = [
+  { code: 'USD', symbol: '$', name: 'US Dollar' },
+  { code: 'EUR', symbol: '€', name: 'Euro' },
+  { code: 'GBP', symbol: '£', name: 'British Pound' },
+  { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
+  { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
+  { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
+  { code: 'BRL', symbol: 'R$', name: 'Brazilian Real' },
+  { code: 'MXN', symbol: 'MX$', name: 'Mexican Peso' },
+  { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
+  { code: 'KRW', symbol: '₩', name: 'Korean Won' },
+  { code: 'PHP', symbol: '₱', name: 'Philippine Peso' },
+  { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
+];
+
 const HomePage = () => {
   const [vouches, setVouches] = useState([]);
   const [loadingVouches, setLoadingVouches] = useState(true);
+  const [stats, setStats] = useState({
+    orders_completed: 0,
+    server_members: 0,
+    active_boosters: 45,
+    average_rating: 4.9
+  });
+  const [currency, setCurrency] = useState(() => {
+    return localStorage.getItem('selectedCurrency') || 'USD';
+  });
+  const [exchangeRates, setExchangeRates] = useState({});
 
   useEffect(() => {
-    const fetchVouches = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(`${API}/vouches?limit=6`);
-        setVouches(response.data);
+        // Fetch vouches
+        const vouchesRes = await axios.get(`${API}/vouches?limit=6`);
+        setVouches(vouchesRes.data);
+        
+        // Fetch stats
+        const statsRes = await axios.get(`${API}/stats`);
+        setStats(statsRes.data);
+        
+        // Fetch exchange rates
+        const ratesRes = await axios.get(`${API}/currency/rates`);
+        setExchangeRates(ratesRes.data.rates || {});
       } catch (error) {
-        console.error('Failed to fetch vouches:', error);
+        console.error('Failed to fetch data:', error);
       } finally {
         setLoadingVouches(false);
       }
     };
-    fetchVouches();
+    fetchData();
   }, []);
+
+  const handleCurrencyChange = (newCurrency) => {
+    setCurrency(newCurrency);
+    localStorage.setItem('selectedCurrency', newCurrency);
+    // Dispatch event for other components to listen
+    window.dispatchEvent(new CustomEvent('currencyChange', { detail: newCurrency }));
+  };
+
+  const currentCurrencyData = CURRENCIES.find(c => c.code === currency) || CURRENCIES[0];
 
   const trustPoints = [
     { icon: Zap, title: 'Fast Delivery', description: 'Most orders completed within 24-48 hours' },
@@ -37,15 +88,44 @@ const HomePage = () => {
     { icon: MessageCircle, title: '24/7 Support', description: 'Round-the-clock Discord support for all customers' },
   ];
 
-  const stats = [
-    { value: mockStats.ordersCompleted.toLocaleString() + '+', label: 'Orders Completed' },
-    { value: mockStats.happyCustomers.toLocaleString() + '+', label: 'Happy Customers' },
-    { value: mockStats.activeBoosters + '+', label: 'Active Boosters' },
-    { value: mockStats.averageRating.toString(), label: 'Average Rating' },
+  const displayStats = [
+    { value: stats.orders_completed > 0 ? stats.orders_completed.toLocaleString() + '+' : '500+', label: 'Orders Completed' },
+    { value: stats.server_members > 0 ? stats.server_members.toLocaleString() + '+' : '1000+', label: 'Server Members' },
+    { value: stats.active_boosters + '+', label: 'Active Boosters' },
+    { value: stats.average_rating.toString(), label: 'Average Rating' },
   ];
 
   return (
     <div className="bg-black">
+      {/* Currency Selector - Fixed Position */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button 
+              variant="outline" 
+              className="bg-[#121212] border-white/20 text-white hover:bg-[#00FFD1] hover:text-black hover:border-[#00FFD1] rounded-none px-4 py-2"
+            >
+              <span className="mr-2">{currentCurrencyData.symbol}</span>
+              {currency}
+              <ChevronDown className="w-4 h-4 ml-2" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="bg-[#121212] border-white/10 rounded-none max-h-[300px] overflow-y-auto">
+            {CURRENCIES.map((curr) => (
+              <DropdownMenuItem
+                key={curr.code}
+                onClick={() => handleCurrencyChange(curr.code)}
+                className={`cursor-pointer ${currency === curr.code ? 'bg-[#00FFD1]/20 text-[#00FFD1]' : 'text-white hover:bg-white/10'}`}
+              >
+                <span className="w-8">{curr.symbol}</span>
+                <span className="flex-1">{curr.code}</span>
+                <span className="text-white/40 text-sm">{curr.name}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center overflow-hidden">
         {/* Grid Pattern Overlay */}
@@ -118,7 +198,7 @@ const HomePage = () => {
       <section className="py-20 border-y border-white/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
+            {displayStats.map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="text-4xl md:text-5xl font-semibold text-[#00FFD1] mb-2">
                   {stat.value}
