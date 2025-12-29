@@ -56,25 +56,38 @@ const ServicesPage = () => {
     setCheckoutOpen(true);
   };
 
-  const handlePayment = (paymentMethod) => {
-    // Store order info
-    const orderInfo = {
-      character: selectedCharacter.name,
-      characterClass: selectedClass,
-      characterIcon: selectedCharacter.icon,
-      serviceType: selectedServiceType,
-      price: getPrice(selectedCharacter.basePrice),
-      timestamp: new Date().toISOString()
-    };
-    localStorage.setItem('pendingOrder', JSON.stringify(orderInfo));
+  const handlePayment = async (paymentMethod) => {
+    setCreating(true);
     
-    toast.success('Redirecting to payment...', {
-      description: `Opening ${paymentMethod.name}`
-    });
-    
-    // Open payment link
-    window.open(paymentMethod.url, '_blank');
-    setCheckoutOpen(false);
+    try {
+      // Create order in backend
+      const orderData = {
+        service_type: selectedServiceType,
+        character_id: selectedCharacter.id,
+        character_name: selectedCharacter.name,
+        character_class: selectedClass,
+        character_icon: selectedCharacter.icon,
+        price: getPrice(selectedCharacter.basePrice),
+        payment_method: paymentMethod.id
+      };
+      
+      await axios.post(`${API}/orders`, orderData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      toast.success('Order created! Complete payment to proceed.', {
+        description: `Opening ${paymentMethod.name}`
+      });
+      
+      // Open payment link
+      window.open(paymentMethod.url, '_blank');
+      setCheckoutOpen(false);
+    } catch (error) {
+      console.error('Failed to create order:', error);
+      toast.error('Failed to create order. Please try again.');
+    } finally {
+      setCreating(false);
+    }
   };
 
   return (
