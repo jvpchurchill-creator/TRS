@@ -10,7 +10,7 @@ import sys
 from datetime import datetime
 
 # Base URL from frontend/.env
-BASE_URL = "https://rival-syndicate.preview.emergentagent.com/api"
+BASE_URL = "https://boostservice.preview.emergentagent.com/api"
 
 class APITester:
     def __init__(self):

@@ -203,7 +203,7 @@ async def discord_login():
 @api_router.get("/auth/discord/callback")
 async def discord_callback(code: str = None, error: str = None):
     """Handle Discord OAuth callback"""
-    FRONTEND_URL = "https://rival-syndicate.preview.emergentagent.com"
+    FRONTEND_URL = "https://boostservice.preview.emergentagent.com"
     
     if error:
         logger.error(f"Discord OAuth error: {error}")
