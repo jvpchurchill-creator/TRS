@@ -15,6 +15,7 @@ BOT_TOKEN = os.environ.get('DISCORD_BOT_TOKEN')
 GUILD_ID = os.environ.get('DISCORD_GUILD_ID')
 TICKET_CATEGORY_ID = os.environ.get('DISCORD_TICKET_CATEGORY_ID')
 VOUCHES_CHANNEL_ID = os.environ.get('DISCORD_VOUCHES_CHANNEL_ID')
+ORDERS_CHANNEL_ID = os.environ.get('DISCORD_ORDERS_CHANNEL_ID')
 
 def get_headers():
     return {
