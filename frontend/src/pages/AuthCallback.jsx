@@ -1,18 +1,22 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
 
 const AuthCallback = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [status, setStatus] = useState('loading'); // loading, success, error
+  const { setAuthData } = useAuth();
+  const [status, setStatus] = useState('loading');
 
   useEffect(() => {
     const processCallback = async () => {
       const token = searchParams.get('token');
       const userParam = searchParams.get('user');
       const error = searchParams.get('error');
+
+      console.log('Auth callback params:', { hasToken: !!token, hasUser: !!userParam, error });
 
       if (error) {
         setStatus('error');
@@ -25,17 +29,17 @@ const AuthCallback = () => {
         try {
           // Parse user data from URL
           const userData = JSON.parse(decodeURIComponent(userParam));
+          console.log('Parsed user data:', userData);
           
-          // Store in localStorage
-          localStorage.setItem('accessToken', token);
-          localStorage.setItem('rivalSyndicateUser', JSON.stringify(userData));
+          // Store in context and localStorage
+          setAuthData(userData, token);
           
           setStatus('success');
           toast.success(`Welcome, ${userData.username}!`);
           
+          // Give time for state to update, then navigate
           setTimeout(() => {
-            // Force full page reload to update auth context
-            window.location.href = '/dashboard';
+            navigate('/dashboard');
           }, 1500);
         } catch (err) {
           console.error('Auth parsing error:', err);
@@ -44,13 +48,13 @@ const AuthCallback = () => {
           setTimeout(() => navigate('/'), 2000);
         }
       } else {
-        // No token, redirect home
+        console.log('No token or user in URL, redirecting home');
         navigate('/');
       }
     };
 
     processCallback();
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, setAuthData]);
 
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
