@@ -349,7 +349,7 @@ async def get_all_users(authorization: str = None):
 
 @api_router.post("/orders")
 async def create_order(order_data: OrderCreate, authorization: str = None):
-    """Create a new order"""
+    """Create a new order and create Discord ticket"""
     user = await get_current_user(authorization)
     
     new_order = Order(
@@ -367,6 +367,30 @@ async def create_order(order_data: OrderCreate, authorization: str = None):
     await db.orders.insert_one(new_order.dict())
     
     logger.info(f"New order created: {new_order.id} by {user['username']}")
+    
+    # Create Discord ticket channel
+    try:
+        ticket_result = await create_ticket_channel(
+            order_id=new_order.id,
+            discord_username=user["username"],
+            discord_id=user.get("discord_id", ""),
+            character_name=order_data.character_name,
+            service_type=order_data.service_type,
+            price=order_data.price
+        )
+        
+        if ticket_result:
+            # Update order with ticket channel info
+            await db.orders.update_one(
+                {"id": new_order.id},
+                {"$set": {
+                    "ticket_channel_id": ticket_result.get("channel_id"),
+                    "ticket_channel_name": ticket_result.get("channel_name")
+                }}
+            )
+            logger.info(f"Discord ticket created: {ticket_result.get('channel_name')}")
+    except Exception as e:
+        logger.error(f"Failed to create Discord ticket: {e}")
     
     return new_order.dict()
 
