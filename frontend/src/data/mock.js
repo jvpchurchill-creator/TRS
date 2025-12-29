@@ -15,7 +15,9 @@ export const discordServer = {
   id: "1389850246439370802",
   name: "The Rival Syndicate",
   icon: "https://customer-assets.emergentagent.com/job_rival-syndicate/artifacts/9k8acf1z_image.png",
-  inviteUrl: "https://discord.gg/rivalsyndicate"
+  inviteUrl: "https://discord.gg/J23sv388bT",
+  ticketCategoryId: "1424027970162528288",
+  vouchesChannelId: "1451590556051312650"
 };
 
 // Site Logo
