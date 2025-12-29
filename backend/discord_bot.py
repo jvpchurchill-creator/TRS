@@ -154,6 +154,7 @@ async def send_ticket_update(channel_id: str, message: str, embed_data: Optional
 async def fetch_vouches(limit: int = 50) -> List[Dict]:
     """
     Fetch vouches/feedback messages from the vouches channel
+    Handles both text vouches and mention-based vouches (where users tag who they vouch for)
     """
     config = get_config()
     if not config['bot_token'] or not config['vouches_channel_id']:
@@ -173,21 +174,46 @@ async def fetch_vouches(limit: int = 50) -> List[Dict]:
                 vouches = []
                 
                 for msg in messages:
-                    # Skip bot messages and empty messages
-                    if msg.get("author", {}).get("bot") or not msg.get("content"):
+                    # Skip bot messages
+                    if msg.get("author", {}).get("bot"):
                         continue
                     
                     author = msg.get("author", {})
+                    content = msg.get("content", "")
+                    mentions = msg.get("mentions", [])
+                    
+                    # Build vouch content - either from text or from mentions
+                    vouch_content = content
+                    mentioned_users = []
+                    
+                    if mentions:
+                        # Extract mentioned user names
+                        for mention in mentions:
+                            display_name = mention.get("global_name") or mention.get("username", "Unknown")
+                            mentioned_users.append(display_name)
+                        
+                        # If no text content but has mentions, create a vouch description
+                        if not content.strip() and mentioned_users:
+                            vouch_content = f"Vouched for: {', '.join(mentioned_users)}"
+                    
+                    # Skip if still no content (no text and no mentions)
+                    if not vouch_content.strip():
+                        continue
+                    
+                    # Get author display name
+                    author_display = author.get("global_name") or author.get("username", "Unknown")
+                    
                     vouches.append({
                         "id": msg.get("id"),
-                        "content": msg.get("content", "")[:500],  # Limit content length
+                        "content": vouch_content[:500],  # Limit content length
                         "author": {
-                            "username": author.get("username", "Unknown"),
+                            "username": author_display,
                             "avatar": f"https://cdn.discordapp.com/avatars/{author.get('id')}/{author.get('avatar')}.png" if author.get("avatar") else None,
                             "id": author.get("id")
                         },
                         "timestamp": msg.get("timestamp"),
-                        "attachments": [a.get("url") for a in msg.get("attachments", [])[:3]]  # Max 3 attachments
+                        "attachments": [a.get("url") for a in msg.get("attachments", [])[:3]],  # Max 3 attachments
+                        "mentioned_users": mentioned_users
                     })
                 
                 return vouches
