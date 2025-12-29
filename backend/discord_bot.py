@@ -301,8 +301,7 @@ async def get_orders_count() -> int:
 async def get_active_boosters_count() -> int:
     """
     Get count of members who have any of the booster role IDs
-    Note: Requires Server Members Intent enabled on Discord Bot settings
-    If not available, returns 0 (frontend should handle gracefully)
+    Requires Server Members Intent enabled on Discord Bot settings
     """
     config = get_config()
     if not config['bot_token'] or not config['guild_id']:
@@ -316,47 +315,42 @@ async def get_active_boosters_count() -> int:
     
     try:
         async with httpx.AsyncClient() as client:
-            # Try to get members - requires Server Members Intent
-            response = await client.get(
-                f"{DISCORD_API}/guilds/{config['guild_id']}/members",
-                headers=get_headers(),
-                params={"limit": 1000}
-            )
+            # Paginate through all members
+            all_members = []
+            after = "0"
             
-            if response.status_code == 403:
-                logger.warning("Bot lacks Server Members Intent - cannot count boosters by role")
-                # Fallback: Try to estimate from guild preview
-                preview_response = await client.get(
-                    f"{DISCORD_API}/guilds/{config['guild_id']}/preview",
-                    headers=get_headers()
+            for _ in range(10):  # Max 10 requests = 10,000 members
+                response = await client.get(
+                    f"{DISCORD_API}/guilds/{config['guild_id']}/members",
+                    headers=get_headers(),
+                    params={"limit": 1000, "after": after}
                 )
-                if preview_response.status_code == 200:
-                    # Return 0 to indicate we couldn't get real count
+                
+                if response.status_code == 403:
+                    logger.warning("Bot lacks Server Members Intent - cannot count boosters by role")
                     return 0
-                return 0
+                
+                if response.status_code == 200:
+                    members = response.json()
+                    if not members:
+                        break
+                    all_members.extend(members)
+                    after = members[-1]["user"]["id"]
+                    if len(members) < 1000:
+                        break
+                else:
+                    logger.error(f"Failed to fetch members: {response.status_code} - {response.text}")
+                    break
             
-            if response.status_code == 200:
-                members = response.json()
-                
-                # Count unique members with any booster role
-                booster_count = 0
-                seen_user_ids = set()
-                
-                for member in members:
-                    user_id = member.get("user", {}).get("id")
-                    if user_id in seen_user_ids:
-                        continue
-                        
-                    member_roles = member.get("roles", [])
-                    if any(role_id in member_roles for role_id in booster_role_ids):
-                        booster_count += 1
-                        seen_user_ids.add(user_id)
-                
-                logger.info(f"Found {booster_count} active boosters")
-                return booster_count
-            else:
-                logger.error(f"Failed to fetch members: {response.status_code} - {response.text}")
-                return 0
+            # Count members with any booster role
+            booster_count = 0
+            for member in all_members:
+                member_roles = member.get("roles", [])
+                if any(role_id in member_roles for role_id in booster_role_ids):
+                    booster_count += 1
+            
+            logger.info(f"Found {booster_count} active boosters from {len(all_members)} total members")
+            return booster_count
             
     except Exception as e:
         logger.error(f"Error fetching booster count: {e}")
