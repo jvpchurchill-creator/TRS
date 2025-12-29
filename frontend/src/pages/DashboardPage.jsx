@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Package, Clock, User, MessageCircle, CheckCircle, AlertCircle, Loader } from 'lucide-react';
+import { Package, Clock, MessageCircle, CheckCircle, AlertCircle, Loader } from 'lucide-react';
 import { Progress } from '../components/ui/progress';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs';
-import { mockOrders } from '../data/mock';
+import axios from 'axios';
+import { discordServer } from '../data/mock';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const statusConfig = {
   pending: { label: 'Pending', color: 'bg-yellow-500/20 text-yellow-400', icon: AlertCircle },
@@ -17,27 +21,44 @@ const statusConfig = {
 };
 
 const DashboardPage = () => {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, token, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
+    if (!authLoading && !isAuthenticated) {
       navigate('/');
     }
-  }, [isAuthenticated, loading, navigate]);
+  }, [isAuthenticated, authLoading, navigate]);
 
   useEffect(() => {
-    // Load mock orders
-    setOrders(mockOrders);
-  }, []);
+    const fetchOrders = async () => {
+      if (!token) return;
+      
+      try {
+        const response = await axios.get(`${API}/orders`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setOrders(response.data);
+      } catch (error) {
+        console.error('Failed to fetch orders:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isAuthenticated && token) {
+      fetchOrders();
+    }
+  }, [isAuthenticated, token]);
 
   const filteredOrders = activeTab === 'all' 
     ? orders 
     : orders.filter(o => o.status === activeTab);
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="w-16 h-16 border-4 border-[#00FFD1] border-t-transparent rounded-full animate-spin" />
@@ -117,7 +138,7 @@ const DashboardPage = () => {
                 </Card>
               ) : (
                 filteredOrders.map((order) => {
-                  const status = statusConfig[order.status];
+                  const status = statusConfig[order.status] || statusConfig.pending;
                   const StatusIcon = status.icon;
                   return (
                     <Card key={order.id} className="bg-[#121212] border-white/10 rounded-none hover:border-[#00FFD1]/30 transition-all duration-300">
@@ -126,10 +147,22 @@ const DashboardPage = () => {
                           {/* Order Info */}
                           <div className="flex-1">
                             <div className="flex items-center gap-4 mb-4">
-                              <h3 className="text-xl font-semibold text-white">
-                                {order.serviceName} - {order.packageName}
-                              </h3>
-                              <Badge className={`${status.color} rounded-none`}>
+                              {order.character_icon && (
+                                <img 
+                                  src={order.character_icon} 
+                                  alt={order.character_name}
+                                  className="w-12 h-12 object-cover"
+                                />
+                              )}
+                              <div>
+                                <h3 className="text-xl font-semibold text-white">
+                                  {order.character_name}
+                                </h3>
+                                <p className="text-white/60 text-sm">
+                                  {order.service_type === 'priority-farm' ? 'Priority Farm' : 'Lord Boosting'}
+                                </p>
+                              </div>
+                              <Badge className={`${status.color} rounded-none ml-auto`}>
                                 <StatusIcon className="w-3 h-3 mr-1" />
                                 {status.label}
                               </Badge>
@@ -138,7 +171,7 @@ const DashboardPage = () => {
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                               <div>
                                 <span className="text-white/40 block">Order ID</span>
-                                <span className="text-white">{order.id}</span>
+                                <span className="text-white font-mono text-xs">{order.id.slice(0, 8)}...</span>
                               </div>
                               <div>
                                 <span className="text-white/40 block">Price</span>
@@ -146,12 +179,12 @@ const DashboardPage = () => {
                               </div>
                               <div>
                                 <span className="text-white/40 block">ETA</span>
-                                <span className="text-white">{order.eta}</span>
+                                <span className="text-white">{order.eta || 'TBD'}</span>
                               </div>
                               <div>
                                 <span className="text-white/40 block">Created</span>
                                 <span className="text-white">
-                                  {new Date(order.createdAt).toLocaleDateString()}
+                                  {new Date(order.created_at).toLocaleDateString()}
                                 </span>
                               </div>
                             </div>
@@ -180,18 +213,10 @@ const DashboardPage = () => {
 
                           {/* Booster Info */}
                           <div className="flex flex-col items-center lg:items-end gap-4">
-                            {order.booster ? (
-                              <div className="flex items-center gap-3">
-                                <div className="text-right">
-                                  <span className="text-white/40 text-sm block">Assigned Booster</span>
-                                  <span className="text-white">{order.booster.username}</span>
-                                </div>
-                                <Avatar className="w-12 h-12 rounded-none border border-[#00FFD1]/50">
-                                  <AvatarImage src={order.booster.avatar} />
-                                  <AvatarFallback className="bg-[#00FFD1]/20 text-[#00FFD1] rounded-none">
-                                    {order.booster.username.charAt(0)}
-                                  </AvatarFallback>
-                                </Avatar>
+                            {order.booster_username ? (
+                              <div className="text-center lg:text-right">
+                                <span className="text-white/40 text-sm block">Assigned Booster</span>
+                                <span className="text-white">{order.booster_username}</span>
                               </div>
                             ) : (
                               <div className="text-center lg:text-right">
@@ -202,7 +227,7 @@ const DashboardPage = () => {
                             <Button
                               variant="outline"
                               className="border-white/20 text-white hover:bg-white hover:text-black rounded-none"
-                              onClick={() => window.open('https://discord.gg', '_blank')}
+                              onClick={() => window.open(discordServer.inviteUrl, '_blank')}
                             >
                               <MessageCircle className="w-4 h-4 mr-2" />
                               Open Support Ticket
