@@ -64,7 +64,9 @@ const Header = () => {
 
           {/* Auth Section */}
           <div className="hidden md:flex items-center gap-4">
-            {isAuthenticated ? (
+            {loading ? (
+              <div className="w-8 h-8 border-2 border-[#00FFD1] border-t-transparent rounded-full animate-spin" />
+            ) : isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="flex items-center gap-3 px-3 py-2 hover:bg-white/10 rounded-none">
