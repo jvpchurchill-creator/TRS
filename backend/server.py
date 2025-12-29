@@ -42,9 +42,9 @@ DISCORD_OAUTH_URL = f"https://discord.com/api/oauth2/authorize?client_id={DISCOR
 # Create the main app
 app = FastAPI(title="The Rival Syndicate API")
 
-# Mount static files
+# Mount static files at /api/static so it goes through the API path
 from fastapi.staticfiles import StaticFiles
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/api/static", StaticFiles(directory="static"), name="static")
 
 # Create a router with the /api prefix
 api_router = APIRouter(prefix="/api")
