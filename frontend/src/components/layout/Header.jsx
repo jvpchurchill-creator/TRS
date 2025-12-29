@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Menu, X, Crown, LogOut, User, Shield, LayoutDashboard } from 'lucide-react';
+import { Menu, X, LogOut, Shield, LayoutDashboard } from 'lucide-react';
 import { Button } from '../ui/button';
 import {
   DropdownMenu,
@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { siteLogo, discordServer } from '../../data/mock';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -31,11 +32,13 @@ const Header = () => {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-none bg-[#00FFD1] flex items-center justify-center transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(0,255,209,0.5)]">
-              <Crown className="w-6 h-6 text-black" />
-            </div>
+            <img 
+              src={siteLogo} 
+              alt="TRS Logo" 
+              className="w-12 h-12 rounded-lg object-cover transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(0,255,209,0.5)]"
+            />
             <span className="text-xl font-semibold text-white tracking-tight hidden sm:block">
-              Rival Syndicate
+              The Rival Syndicate
             </span>
           </Link>
 
