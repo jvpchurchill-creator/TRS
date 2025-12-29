@@ -301,7 +301,8 @@ async def get_orders_count() -> int:
 async def get_active_boosters_count() -> int:
     """
     Get count of members who have any of the booster role IDs
-    Uses Discord API to fetch members with specific roles
+    Note: Requires Server Members Intent enabled on Discord Bot settings
+    If not available, returns 0 (frontend should handle gracefully)
     """
     config = get_config()
     if not config['bot_token'] or not config['guild_id']:
@@ -315,45 +316,47 @@ async def get_active_boosters_count() -> int:
     
     try:
         async with httpx.AsyncClient() as client:
-            # Get all members with pagination (Discord limits to 1000 per request)
-            all_members = []
-            after = "0"
+            # Try to get members - requires Server Members Intent
+            response = await client.get(
+                f"{DISCORD_API}/guilds/{config['guild_id']}/members",
+                headers=get_headers(),
+                params={"limit": 1000}
+            )
             
-            for _ in range(10):  # Max 10 requests = 10,000 members
-                response = await client.get(
-                    f"{DISCORD_API}/guilds/{config['guild_id']}/members",
-                    headers=get_headers(),
-                    params={"limit": 1000, "after": after}
+            if response.status_code == 403:
+                logger.warning("Bot lacks Server Members Intent - cannot count boosters by role")
+                # Fallback: Try to estimate from guild preview
+                preview_response = await client.get(
+                    f"{DISCORD_API}/guilds/{config['guild_id']}/preview",
+                    headers=get_headers()
                 )
+                if preview_response.status_code == 200:
+                    # Return 0 to indicate we couldn't get real count
+                    return 0
+                return 0
+            
+            if response.status_code == 200:
+                members = response.json()
                 
-                if response.status_code == 200:
-                    members = response.json()
-                    if not members:
-                        break
-                    all_members.extend(members)
-                    after = members[-1]["user"]["id"]
-                    if len(members) < 1000:
-                        break
-                else:
-                    logger.error(f"Failed to fetch members: {response.status_code} - {response.text}")
-                    break
-            
-            # Count unique members with any booster role
-            booster_count = 0
-            seen_user_ids = set()
-            
-            for member in all_members:
-                user_id = member.get("user", {}).get("id")
-                if user_id in seen_user_ids:
-                    continue
-                    
-                member_roles = member.get("roles", [])
-                if any(role_id in member_roles for role_id in booster_role_ids):
-                    booster_count += 1
-                    seen_user_ids.add(user_id)
-            
-            logger.info(f"Found {booster_count} active boosters from {len(all_members)} total members")
-            return booster_count
+                # Count unique members with any booster role
+                booster_count = 0
+                seen_user_ids = set()
+                
+                for member in members:
+                    user_id = member.get("user", {}).get("id")
+                    if user_id in seen_user_ids:
+                        continue
+                        
+                    member_roles = member.get("roles", [])
+                    if any(role_id in member_roles for role_id in booster_role_ids):
+                        booster_count += 1
+                        seen_user_ids.add(user_id)
+                
+                logger.info(f"Found {booster_count} active boosters")
+                return booster_count
+            else:
+                logger.error(f"Failed to fetch members: {response.status_code} - {response.text}")
+                return 0
             
     except Exception as e:
         logger.error(f"Error fetching booster count: {e}")
