@@ -591,7 +591,7 @@ CHARACTERS = {
         {"id": "peni-parker", "name": "Peni Parker", "basePrice": 25, "icon": f"{ICON_BASE}Peni%20Parker%20Deluxe%20Avatar.png"},
         {"id": "captain-america", "name": "Captain America", "basePrice": 30, "icon": f"{ICON_BASE}Captain%20America%20Deluxe%20Avatar.png"},
         {"id": "magneto", "name": "Magneto", "basePrice": 40, "icon": f"{ICON_BASE}Magneto%20Deluxe%20Avatar.png"},
-        {"id": "rogue", "name": "Rogue", "basePrice": 25, "icon": "https://boostservice.preview.emergentagent.com/api/static/rogue.png?v=2"}
+        {"id": "rogue", "name": "Rogue", "basePrice": 25, "icon": "https://rivalskins.com/wp-content/uploads/marvel-assets/assets/lord-icons/Rogue%20Lord%20Avatar.webp"}
     ],
     "strategist": [
         {"id": "adam-warlock", "name": "Adam Warlock", "basePrice": 40, "icon": f"{ICON_BASE}Adam%20Warlock%20Deluxe%20Avatar.png"},
