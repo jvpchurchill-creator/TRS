@@ -45,6 +45,7 @@ async def create_ticket_channel(
 ) -> Optional[Dict]:
     """
     Create a ticket channel for an order under the specified category
+    Adds booster roles with access to the channel
     """
     config = get_config()
     if not config['bot_token'] or not config['guild_id'] or not config['ticket_category_id']:
@@ -56,7 +57,11 @@ async def create_ticket_channel(
         channel_name = f"ticket-{discord_username.lower().replace('#', '-')[:20]}-{order_id[:8]}"
         channel_name = ''.join(c if c.isalnum() or c == '-' else '-' for c in channel_name)
         
-        # Permission overwrites - allow the user to see the channel
+        # Permission overwrites
+        # VIEW_CHANNEL = 1024, SEND_MESSAGES = 2048, READ_MESSAGE_HISTORY = 65536
+        # Combined permissions for full access: 1024 + 2048 + 65536 = 68608
+        full_access = "68608"
+        
         permission_overwrites = [
             {
                 "id": config['guild_id'],  # @everyone - deny view
@@ -65,12 +70,21 @@ async def create_ticket_channel(
             }
         ]
         
-        # If we have the user's Discord ID, add them
+        # Add the customer to the channel
         if discord_id:
             permission_overwrites.append({
                 "id": discord_id,
                 "type": 1,  # member
-                "allow": "1024"  # VIEW_CHANNEL
+                "allow": full_access  # Full access for customer
+            })
+        
+        # Add all booster roles with access
+        booster_role_ids = [r.strip() for r in config['booster_role_ids'] if r.strip()]
+        for role_id in booster_role_ids:
+            permission_overwrites.append({
+                "id": role_id,
+                "type": 0,  # role
+                "allow": full_access  # Full access for boosters
             })
         
         async with httpx.AsyncClient() as client:
@@ -91,6 +105,9 @@ async def create_ticket_channel(
                 channel_data = response.json()
                 channel_id = channel_data.get("id")
                 
+                # Build mention string for booster roles
+                booster_mentions = " ".join([f"<@&{role_id}>" for role_id in booster_role_ids])
+                
                 # Send initial message to the channel
                 service_display = "Priority Farm" if service_type == "priority-farm" else "Lord Boosting"
                 embed = {
@@ -104,20 +121,29 @@ async def create_ticket_channel(
                         {"name": "Order ID", "value": f"`{order_id[:8]}`", "inline": True},
                         {"name": "Status", "value": "⏳ Pending Payment", "inline": True}
                     ],
-                    "footer": {"text": "The Rival Syndicate"},
+                    "footer": {"text": "The Rival Syndicate • Use /complete when order is done"},
                     "timestamp": datetime.utcnow().isoformat()
                 }
+                
+                # Welcome message with customer and booster pings
+                welcome_content = f"<@{discord_id}> Welcome to your order ticket!" if discord_id else f"Welcome {discord_username}!"
+                if booster_mentions:
+                    welcome_content += f"\n\n**Boosters:** {booster_mentions}"
                 
                 await client.post(
                     f"{DISCORD_API}/channels/{channel_id}/messages",
                     headers=get_headers(),
                     json={
-                        "content": f"<@{discord_id}> Welcome to your order ticket!" if discord_id else f"Welcome {discord_username}!",
-                        "embeds": [embed]
+                        "content": welcome_content,
+                        "embeds": [embed],
+                        "allowed_mentions": {
+                            "users": [discord_id] if discord_id else [],
+                            "roles": booster_role_ids
+                        }
                     }
                 )
                 
-                logger.info(f"Created ticket channel: {channel_name}")
+                logger.info(f"Created ticket channel: {channel_name} with {len(booster_role_ids)} booster roles")
                 return {
                     "channel_id": channel_id,
                     "channel_name": channel_name
