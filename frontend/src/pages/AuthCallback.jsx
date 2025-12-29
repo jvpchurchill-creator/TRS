@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -9,8 +9,12 @@ const AuthCallback = () => {
   const navigate = useNavigate();
   const { setAuthData } = useAuth();
   const [status, setStatus] = useState('loading');
+  const processedRef = useRef(false);
 
   useEffect(() => {
+    // Prevent double processing
+    if (processedRef.current) return;
+    
     const processCallback = async () => {
       const token = searchParams.get('token');
       const userParam = searchParams.get('user');
@@ -26,6 +30,7 @@ const AuthCallback = () => {
       }
 
       if (token && userParam) {
+        processedRef.current = true;
         try {
           // Parse user data from URL
           const userData = JSON.parse(decodeURIComponent(userParam));
@@ -34,12 +39,16 @@ const AuthCallback = () => {
           // Store in context and localStorage
           setAuthData(userData, token);
           
+          // Also manually set localStorage to ensure it persists
+          localStorage.setItem('rivalSyndicateUser', JSON.stringify(userData));
+          localStorage.setItem('accessToken', token);
+          
           setStatus('success');
           toast.success(`Welcome, ${userData.username}!`);
           
-          // Give time for state to update, then navigate
+          // Give time for state to propagate, then navigate
           setTimeout(() => {
-            navigate('/dashboard');
+            window.location.href = '/dashboard';
           }, 1500);
         } catch (err) {
           console.error('Auth parsing error:', err);
