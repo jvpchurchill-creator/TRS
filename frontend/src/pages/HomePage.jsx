@@ -65,7 +65,7 @@ const HomePage = () => {
                 <Button 
                   variant="ghost" 
                   className="bg-white/10 text-white hover:bg-white hover:text-black rounded-none px-8 py-6 text-lg font-medium transition-all duration-300 w-full sm:w-auto"
-                  onClick={() => window.open('https://discord.gg', '_blank')}
+                  onClick={() => window.open(discordServer.inviteUrl, '_blank')}
                 >
                   Join Discord
                 </Button>
