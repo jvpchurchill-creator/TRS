@@ -45,7 +45,8 @@ async def create_ticket_channel(
     """
     Create a ticket channel for an order under the specified category
     """
-    if not BOT_TOKEN or not GUILD_ID or not TICKET_CATEGORY_ID:
+    config = get_config()
+    if not config['bot_token'] or not config['guild_id'] or not config['ticket_category_id']:
         logger.error("Discord bot credentials not configured")
         return None
     
@@ -57,7 +58,7 @@ async def create_ticket_channel(
         # Permission overwrites - allow the user to see the channel
         permission_overwrites = [
             {
-                "id": GUILD_ID,  # @everyone - deny view
+                "id": config['guild_id'],  # @everyone - deny view
                 "type": 0,  # role
                 "deny": "1024"  # VIEW_CHANNEL
             }
@@ -74,12 +75,12 @@ async def create_ticket_channel(
         async with httpx.AsyncClient() as client:
             # Create the channel
             response = await client.post(
-                f"{DISCORD_API}/guilds/{GUILD_ID}/channels",
+                f"{DISCORD_API}/guilds/{config['guild_id']}/channels",
                 headers=get_headers(),
                 json={
                     "name": channel_name,
                     "type": 0,  # Text channel
-                    "parent_id": TICKET_CATEGORY_ID,
+                    "parent_id": config['ticket_category_id'],
                     "permission_overwrites": permission_overwrites,
                     "topic": f"Order #{order_id[:8]} | {character_name} | {service_type}"
                 }
@@ -130,7 +131,8 @@ async def create_ticket_channel(
 
 async def send_ticket_update(channel_id: str, message: str, embed_data: Optional[Dict] = None):
     """Send an update message to a ticket channel"""
-    if not BOT_TOKEN:
+    config = get_config()
+    if not config['bot_token']:
         return None
     
     try:
@@ -153,14 +155,15 @@ async def fetch_vouches(limit: int = 50) -> List[Dict]:
     """
     Fetch vouches/feedback messages from the vouches channel
     """
-    if not BOT_TOKEN or not VOUCHES_CHANNEL_ID:
+    config = get_config()
+    if not config['bot_token'] or not config['vouches_channel_id']:
         logger.error("Discord bot credentials not configured for vouches")
         return []
     
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{DISCORD_API}/channels/{VOUCHES_CHANNEL_ID}/messages",
+                f"{DISCORD_API}/channels/{config['vouches_channel_id']}/messages",
                 headers=get_headers(),
                 params={"limit": limit}
             )
@@ -198,13 +201,15 @@ async def fetch_vouches(limit: int = 50) -> List[Dict]:
 
 async def get_guild_info() -> Optional[Dict]:
     """Get basic guild information including member count"""
-    if not BOT_TOKEN or not GUILD_ID:
+    config = get_config()
+    if not config['bot_token'] or not config['guild_id']:
+        logger.error("Discord bot credentials not configured for guild info")
         return None
     
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{DISCORD_API}/guilds/{GUILD_ID}?with_counts=true",
+                f"{DISCORD_API}/guilds/{config['guild_id']}?with_counts=true",
                 headers=get_headers()
             )
             
@@ -212,10 +217,12 @@ async def get_guild_info() -> Optional[Dict]:
                 guild = response.json()
                 return {
                     "name": guild.get("name"),
-                    "icon": f"https://cdn.discordapp.com/icons/{GUILD_ID}/{guild.get('icon')}.png" if guild.get("icon") else None,
+                    "icon": f"https://cdn.discordapp.com/icons/{config['guild_id']}/{guild.get('icon')}.png" if guild.get("icon") else None,
                     "member_count": guild.get("approximate_member_count", 0),
                     "online_count": guild.get("approximate_presence_count", 0)
                 }
+            else:
+                logger.error(f"Failed to fetch guild info: {response.status_code} - {response.text}")
             return None
     except Exception as e:
         logger.error(f"Error fetching guild info: {e}")
@@ -223,7 +230,9 @@ async def get_guild_info() -> Optional[Dict]:
 
 async def get_orders_count() -> int:
     """Get count of messages in orders channel (completed orders)"""
-    if not BOT_TOKEN or not ORDERS_CHANNEL_ID:
+    config = get_config()
+    if not config['bot_token'] or not config['orders_channel_id']:
+        logger.error("Discord bot credentials not configured for orders count")
         return 0
     
     try:
@@ -240,7 +249,7 @@ async def get_orders_count() -> int:
                     params["before"] = last_id
                 
                 response = await client.get(
-                    f"{DISCORD_API}/channels/{ORDERS_CHANNEL_ID}/messages",
+                    f"{DISCORD_API}/channels/{config['orders_channel_id']}/messages",
                     headers=get_headers(),
                     params=params
                 )
@@ -254,6 +263,7 @@ async def get_orders_count() -> int:
                     if len(messages) < 100:
                         break
                 else:
+                    logger.error(f"Failed to fetch orders: {response.status_code} - {response.text}")
                     break
             
             return total_count
