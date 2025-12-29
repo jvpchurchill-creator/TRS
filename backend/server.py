@@ -278,9 +278,9 @@ async def discord_callback(code: str = None, error: str = None):
         # Create JWT token
         access_token = create_access_token({"user_id": user["id"], "discord_id": user["discord_id"]})
         
-        # Redirect to frontend with token in URL fragment
-        # The frontend will extract and store the token
+        # Redirect to frontend with token in URL
         import urllib.parse
+        import json
         user_data = {
             "id": user["id"],
             "discord_id": user["discord_id"],
@@ -289,7 +289,7 @@ async def discord_callback(code: str = None, error: str = None):
             "avatar": user.get("avatar"),
             "role": user.get("role", "client")
         }
-        user_json = urllib.parse.quote(str(user_data).replace("'", '"'))
+        user_json = urllib.parse.quote(json.dumps(user_data))
         
         return RedirectResponse(
             url=f"{FRONTEND_URL}/auth/callback?token={access_token}&user={user_json}"
