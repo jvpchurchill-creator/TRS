@@ -15,8 +15,11 @@ import { siteLogo, discordServer } from '../../data/mock';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, isAuthenticated, login, logout, isAdmin, isBooster } = useAuth();
+  const { user, isAuthenticated, login, logout, isAdmin, isBooster, loading } = useAuth();
   const location = useLocation();
+
+  // Debug log
+  console.log('Header auth state:', { isAuthenticated, username: user?.username, loading });
 
   const navLinks = [
     { name: 'Home', path: '/' },
