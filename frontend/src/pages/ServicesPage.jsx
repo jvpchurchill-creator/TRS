@@ -32,11 +32,12 @@ const paymentIcons = {
 };
 
 const ServicesPage = () => {
-  const { isAuthenticated, login } = useAuth();
+  const { isAuthenticated, login, token } = useAuth();
   const [selectedClass, setSelectedClass] = useState('duelist');
   const [selectedServiceType, setSelectedServiceType] = useState('priority-farm');
   const [selectedCharacter, setSelectedCharacter] = useState(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
 
   const serviceType = serviceTypes.find(s => s.id === selectedServiceType);
   const currentCharacters = characters[selectedClass] || [];
