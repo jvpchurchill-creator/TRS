@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
-  Shield, Users, Package, CheckCircle, AlertCircle, Loader, Clock,
-  UserPlus, Eye, Edit, Trash2, Search, Filter
+  Shield, Package, CheckCircle, AlertCircle, Loader, Clock,
+  Edit, Search, Filter
 } from 'lucide-react';
 import { Progress } from '../components/ui/progress';
 import { Badge } from '../components/ui/badge';
 import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Card, CardContent } from '../components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Input } from '../components/ui/input';
 import {
@@ -32,13 +32,15 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from '../components/ui/dialog';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
-import { mockAdminOrders, mockBoosters } from '../data/mock';
+import axios from 'axios';
 import { toast } from 'sonner';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const API = `${BACKEND_URL}/api`;
 
 const statusConfig = {
   pending: { label: 'Pending', color: 'bg-yellow-500/20 text-yellow-400', icon: AlertCircle },
@@ -47,36 +49,63 @@ const statusConfig = {
 };
 
 const AdminDashboard = () => {
-  const { user, isAuthenticated, isAdmin, isBooster, loading } = useAuth();
+  const { user, token, isAuthenticated, isAdmin, isBooster, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
+  const [boosters, setBoosters] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     status: '',
-    boosterId: '',
+    booster_id: '',
     notes: '',
     progress: 0,
+    eta: ''
   });
 
   useEffect(() => {
-    if (!loading && (!isAuthenticated || (!isAdmin && !isBooster))) {
+    if (!authLoading && (!isAuthenticated || (!isAdmin && !isBooster))) {
       navigate('/');
       toast.error('Access denied. Admin or Booster role required.');
     }
-  }, [isAuthenticated, isAdmin, isBooster, loading, navigate]);
+  }, [isAuthenticated, isAdmin, isBooster, authLoading, navigate]);
 
   useEffect(() => {
-    setOrders(mockAdminOrders);
-  }, []);
+    const fetchData = async () => {
+      if (!token) return;
+      
+      try {
+        const [ordersRes, boostersRes] = await Promise.all([
+          axios.get(`${API}/admin/orders`, {
+            headers: { Authorization: `Bearer ${token}` }
+          }),
+          axios.get(`${API}/admin/boosters`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+        ]);
+        setOrders(ordersRes.data.orders || []);
+        setBoosters(boostersRes.data || []);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+        toast.error('Failed to load orders');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (isAuthenticated && token && (isAdmin || isBooster)) {
+      fetchData();
+    }
+  }, [isAuthenticated, token, isAdmin, isBooster]);
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
-      order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.serviceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (order.username && order.username.toLowerCase().includes(searchTerm.toLowerCase()));
+      order.id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.character_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.discord_username?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -92,32 +121,36 @@ const AdminDashboard = () => {
     setSelectedOrder(order);
     setEditForm({
       status: order.status,
-      boosterId: order.booster?.id || '',
+      booster_id: order.booster_id || '',
       notes: order.notes || '',
-      progress: order.progress,
+      progress: order.progress || 0,
+      eta: order.eta || ''
     });
     setEditDialogOpen(true);
   };
 
-  const handleSaveOrder = () => {
-    setOrders(prev => prev.map(o => {
-      if (o.id === selectedOrder.id) {
-        const booster = mockBoosters.find(b => b.id === editForm.boosterId);
-        return {
-          ...o,
-          status: editForm.status,
-          booster: booster ? { username: booster.username, avatar: booster.avatar } : null,
-          notes: editForm.notes,
-          progress: parseInt(editForm.progress),
-        };
-      }
-      return o;
-    }));
-    setEditDialogOpen(false);
-    toast.success('Order updated successfully!');
+  const handleSaveOrder = async () => {
+    try {
+      const response = await axios.patch(
+        `${API}/orders/${selectedOrder.id}`,
+        editForm,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      
+      // Update local state
+      setOrders(prev => prev.map(o => 
+        o.id === selectedOrder.id ? response.data : o
+      ));
+      
+      setEditDialogOpen(false);
+      toast.success('Order updated successfully!');
+    } catch (error) {
+      console.error('Failed to update order:', error);
+      toast.error('Failed to update order');
+    }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="w-16 h-16 border-4 border-[#00FFD1] border-t-transparent rounded-full animate-spin" />
@@ -207,7 +240,7 @@ const AdminDashboard = () => {
                   <TableRow className="border-white/10 hover:bg-transparent">
                     <TableHead className="text-white/60">Order ID</TableHead>
                     <TableHead className="text-white/60">Customer</TableHead>
-                    <TableHead className="text-white/60">Service</TableHead>
+                    <TableHead className="text-white/60">Character</TableHead>
                     <TableHead className="text-white/60">Status</TableHead>
                     <TableHead className="text-white/60">Booster</TableHead>
                     <TableHead className="text-white/60">Progress</TableHead>
@@ -216,63 +249,74 @@ const AdminDashboard = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredOrders.map((order) => {
-                    const status = statusConfig[order.status];
-                    return (
-                      <TableRow key={order.id} className="border-white/10 hover:bg-white/5">
-                        <TableCell className="text-white font-mono">{order.id}</TableCell>
-                        <TableCell className="text-white">
-                          {order.username || 'User#' + order.userId.slice(-4)}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <span className="text-white">{order.serviceName}</span>
-                            <span className="text-white/40 text-sm block">{order.packageName}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={`${status.color} rounded-none`}>
-                            {status.label}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {order.booster ? (
+                  {filteredOrders.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center text-white/60 py-12">
+                        No orders found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredOrders.map((order) => {
+                      const status = statusConfig[order.status] || statusConfig.pending;
+                      return (
+                        <TableRow key={order.id} className="border-white/10 hover:bg-white/5">
+                          <TableCell className="text-white font-mono text-xs">
+                            {order.id?.slice(0, 8)}...
+                          </TableCell>
+                          <TableCell className="text-white">
+                            {order.discord_username || 'Unknown'}
+                          </TableCell>
+                          <TableCell>
                             <div className="flex items-center gap-2">
-                              <Avatar className="w-8 h-8 rounded-none">
-                                <AvatarImage src={order.booster.avatar} />
-                                <AvatarFallback className="bg-[#00FFD1]/20 text-[#00FFD1] rounded-none text-xs">
-                                  {order.booster.username.charAt(0)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-white text-sm">{order.booster.username.split('#')[0]}</span>
+                              {order.character_icon && (
+                                <img src={order.character_icon} alt="" className="w-8 h-8" />
+                              )}
+                              <div>
+                                <span className="text-white">{order.character_name}</span>
+                                <span className="text-white/40 text-xs block capitalize">
+                                  {order.service_type?.replace('-', ' ')}
+                                </span>
+                              </div>
                             </div>
-                          ) : (
-                            <span className="text-yellow-400 text-sm">Unassigned</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="w-24">
-                            <Progress 
-                              value={order.progress} 
-                              className="h-2 bg-white/10 rounded-none [&>div]:bg-[#00FFD1] [&>div]:rounded-none"
-                            />
-                            <span className="text-white/60 text-xs">{order.progress}%</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-[#00FFD1] font-semibold">${order.price}</TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditOrder(order)}
-                            className="text-white hover:text-[#00FFD1] hover:bg-white/10 rounded-none"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={`${status.color} rounded-none`}>
+                              {status.label}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {order.booster_username ? (
+                              <span className="text-white text-sm">{order.booster_username}</span>
+                            ) : (
+                              <span className="text-yellow-400 text-sm">Unassigned</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="w-24">
+                              <Progress 
+                                value={order.progress || 0} 
+                                className="h-2 bg-white/10 rounded-none [&>div]:bg-[#00FFD1] [&>div]:rounded-none"
+                              />
+                              <span className="text-white/60 text-xs">{order.progress || 0}%</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-[#00FFD1] font-semibold">
+                            ${order.price}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditOrder(order)}
+                              className="text-white hover:text-[#00FFD1] hover:bg-white/10 rounded-none"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  )}
                 </TableBody>
               </Table>
             </div>
@@ -286,7 +330,7 @@ const AdminDashboard = () => {
           <DialogHeader>
             <DialogTitle className="text-white">Edit Order</DialogTitle>
             <DialogDescription className="text-white/60">
-              Update order #{selectedOrder?.id}
+              Update order for {selectedOrder?.character_name}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-4">
@@ -305,14 +349,14 @@ const AdminDashboard = () => {
             </div>
             <div className="space-y-2">
               <Label className="text-white">Assign Booster</Label>
-              <Select value={editForm.boosterId} onValueChange={(v) => setEditForm(p => ({ ...p, boosterId: v }))}>
+              <Select value={editForm.booster_id} onValueChange={(v) => setEditForm(p => ({ ...p, booster_id: v }))}>
                 <SelectTrigger className="bg-black border-white/10 text-white rounded-none">
                   <SelectValue placeholder="Select booster" />
                 </SelectTrigger>
                 <SelectContent className="bg-[#121212] border-white/10 rounded-none">
-                  {mockBoosters.map(booster => (
+                  {boosters.map(booster => (
                     <SelectItem key={booster.id} value={booster.id}>
-                      {booster.username} ({booster.ordersCompleted} orders)
+                      {booster.username} ({booster.orders_completed} completed)
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -325,7 +369,16 @@ const AdminDashboard = () => {
                 min="0"
                 max="100"
                 value={editForm.progress}
-                onChange={(e) => setEditForm(p => ({ ...p, progress: e.target.value }))}
+                onChange={(e) => setEditForm(p => ({ ...p, progress: parseInt(e.target.value) || 0 }))}
+                className="bg-black border-white/10 text-white rounded-none"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-white">ETA</Label>
+              <Input
+                value={editForm.eta}
+                onChange={(e) => setEditForm(p => ({ ...p, eta: e.target.value }))}
+                placeholder="e.g., 24-48 hours"
                 className="bg-black border-white/10 text-white rounded-none"
               />
             </div>
