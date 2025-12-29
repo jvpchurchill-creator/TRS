@@ -15,7 +15,7 @@ from jose import JWTError, jwt
 from enum import Enum
 
 # Import Discord bot service
-from discord_bot import create_ticket_channel, fetch_vouches, send_ticket_update, get_guild_info
+from discord_bot import create_ticket_channel, fetch_vouches, send_ticket_update, get_guild_info, get_orders_count
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
