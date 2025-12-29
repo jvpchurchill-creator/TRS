@@ -311,7 +311,10 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Discord Bot Stats API"
+    - "Discord Bot Vouches API"
+    - "Homepage with Stats and Vouches"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -321,3 +324,5 @@ agent_communication:
     message: "Backend implementation complete with Discord OAuth, orders CRUD, admin endpoints. Frontend integrated with real API calls. Please test: 1) Discord OAuth login flow (redirect and callback), 2) Orders API (create, get, update), 3) Admin endpoints (get all orders, boosters). Discord credentials are configured in backend/.env."
   - agent: "testing"
     message: "✅ BACKEND TESTING COMPLETE: All backend APIs tested successfully. Health check, services, characters, Discord OAuth redirect, and authentication middleware all working correctly. 13/14 tests passed (92.9% success rate). One 'failed' test is actually correct behavior - order endpoints properly require authentication before checking order validity. All high-priority backend tasks are working and ready for production."
+  - agent: "main"
+    message: "Discord bot is now connected and working. Please test: 1) GET /api/stats - should return live server_members and orders_completed from Discord, 2) GET /api/vouches - should return vouches from Discord channel (may have mention-based vouches), 3) Frontend homepage should display live stats and vouches section. Bot was invited with admin permissions to guild 1389850246439370802."
