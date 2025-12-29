@@ -232,17 +232,17 @@ backend:
         comment: "POST /api/orders creates Discord ticket channel under specified category. Requires full login flow to test."
 
 frontend:
-  - task: "Homepage with Spline 3D"
+  - task: "Homepage with Stats and Vouches"
     implemented: true
     working: true
     file: "pages/HomePage.jsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: false
+    needs_retesting: true
     status_history:
       - working: true
         agent: "main"
-        comment: "Homepage displays hero section with 3D Spline animation, stats, trust points, how it works section."
+        comment: "Homepage displays hero section with 3D Spline animation, live stats from Discord (server members, orders completed), vouches section with real customer reviews, trust points, how it works section."
 
   - task: "Services Page with Character Grid"
     implemented: true
