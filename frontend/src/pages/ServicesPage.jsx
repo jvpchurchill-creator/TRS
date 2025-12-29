@@ -298,10 +298,6 @@ const ServicesPage = () => {
                         className="w-full h-full object-cover"
                         loading="lazy"
                       />
-                        <span className="text-4xl font-bold text-[#00FFD1]">
-                          {character.name.charAt(0)}
-                        </span>
-                      </div>
                     </div>
                     <h3 className="text-white font-medium text-sm mb-2 line-clamp-1">
                       {character.name}
