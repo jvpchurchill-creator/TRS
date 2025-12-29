@@ -363,7 +363,7 @@ async def get_all_users(authorization: str = None):
 # ============== ORDER ROUTES ==============
 
 @api_router.post("/orders")
-async def create_order(order_data: OrderCreate, authorization: str = None):
+async def create_order(order_data: OrderCreate, authorization: Optional[str] = Header(None)):
     """Create a new order and create Discord ticket"""
     user = await get_current_user(authorization)
     
