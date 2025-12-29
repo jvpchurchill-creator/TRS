@@ -34,7 +34,10 @@ JWT_ALGORITHM = "HS256"
 JWT_EXPIRATION_HOURS = 24 * 7  # 7 days
 
 DISCORD_API_ENDPOINT = "https://discord.com/api/v10"
-DISCORD_OAUTH_URL = f"https://discord.com/api/oauth2/authorize?client_id={DISCORD_CLIENT_ID}&redirect_uri={DISCORD_REDIRECT_URI}&response_type=code&scope=identify%20email"
+# URL encode the redirect URI for the OAuth URL
+import urllib.parse
+DISCORD_REDIRECT_URI_ENCODED = urllib.parse.quote(DISCORD_REDIRECT_URI or "", safe="")
+DISCORD_OAUTH_URL = f"https://discord.com/api/oauth2/authorize?client_id={DISCORD_CLIENT_ID}&redirect_uri={DISCORD_REDIRECT_URI_ENCODED}&response_type=code&scope=identify%20email"
 
 # Create the main app
 app = FastAPI(title="The Rival Syndicate API")
