@@ -119,15 +119,18 @@ backend:
 
   - task: "Discord OAuth Login"
     implemented: true
-    working: "NA"
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "GET /api/auth/discord/login redirects to Discord OAuth. GET /api/auth/discord/callback handles code exchange."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Discord OAuth login endpoint correctly redirects to Discord OAuth URL with proper client_id, redirect_uri, and scope parameters. Status 307 redirect working as expected."
 
   - task: "Services API"
     implemented: true
