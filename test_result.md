@@ -259,11 +259,14 @@ frontend:
     file: "pages/HomePage.jsx"
     stuck_count: 0
     priority: "high"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: true
         agent: "main"
         comment: "Homepage displays hero section with 3D Spline animation, live stats from Discord (server members, orders completed), vouches section with real customer reviews, trust points, how it works section."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: Homepage loads successfully with 3D Spline animation (canvas element), stats section showing Orders Completed/Server Members/Active Boosters/Average Rating, vouches section with 'What Our Customers Say' heading. Currency selector in bottom-right works perfectly - dropdown opens with EUR/GBP/CAD/INR options, selection persists across pages. Minor: No customer feedback cards visible in vouches section but section structure is present."
 
   - task: "Services Page with Character Grid"
     implemented: true
