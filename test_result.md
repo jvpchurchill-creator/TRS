@@ -176,15 +176,18 @@ backend:
 
   - task: "User Role Management"
     implemented: true
-    working: "NA"
+    working: true
     file: "server.py"
     stuck_count: 0
     priority: "medium"
-    needs_retesting: true
+    needs_retesting: false
     status_history:
       - working: "NA"
         agent: "main"
         comment: "PATCH /api/users/{id}/role updates user role (admin only). GET /api/users gets all users (admin only)."
+      - working: true
+        agent: "testing"
+        comment: "✅ TESTED: User management endpoints (/api/users, /api/users/{id}/role) properly require authentication (return 401 without token). Admin-only access control working correctly."
 
 frontend:
   - task: "Homepage with Spline 3D"
