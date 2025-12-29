@@ -291,6 +291,171 @@ class APITester:
             except Exception as e:
                 self.log_result(f"Admin Auth - {description} ({method} {endpoint})", False, f"Exception: {str(e)}")
 
+    def test_discord_stats_api(self):
+        """Test GET /api/stats - Discord Server Stats API"""
+        try:
+            response = self.session.get(f"{BASE_URL}/stats")
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ["server_members", "orders_completed", "active_boosters", "average_rating"]
+                
+                if all(field in data for field in required_fields):
+                    server_members = data.get("server_members", 0)
+                    orders_completed = data.get("orders_completed", 0)
+                    active_boosters = data.get("active_boosters", 0)
+                    average_rating = data.get("average_rating", 0)
+                    
+                    # Validate data types and ranges
+                    if (isinstance(server_members, int) and server_members > 0 and
+                        isinstance(orders_completed, int) and orders_completed >= 0 and
+                        isinstance(active_boosters, int) and active_boosters >= 0 and
+                        isinstance(average_rating, (int, float)) and 0 <= average_rating <= 5):
+                        
+                        self.log_result(
+                            "Discord Stats API (GET /api/stats)", 
+                            True, 
+                            f"Server Members: {server_members}, Orders: {orders_completed}, Boosters: {active_boosters}, Rating: {average_rating}"
+                        )
+                    else:
+                        self.log_result(
+                            "Discord Stats API (GET /api/stats)", 
+                            False, 
+                            f"Invalid data values - Members: {server_members}, Orders: {orders_completed}, Boosters: {active_boosters}, Rating: {average_rating}",
+                            data
+                        )
+                else:
+                    self.log_result(
+                        "Discord Stats API (GET /api/stats)", 
+                        False, 
+                        f"Missing required fields: {required_fields}",
+                        data
+                    )
+            else:
+                self.log_result(
+                    "Discord Stats API (GET /api/stats)", 
+                    False, 
+                    f"Expected 200, got {response.status_code}",
+                    response.text
+                )
+        except Exception as e:
+            self.log_result("Discord Stats API (GET /api/stats)", False, f"Exception: {str(e)}")
+
+    def test_discord_vouches_api(self):
+        """Test GET /api/vouches - Discord Vouches API"""
+        try:
+            response = self.session.get(f"{BASE_URL}/vouches")
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                if isinstance(data, list):
+                    if len(data) > 0:
+                        # Check structure of first vouch
+                        first_vouch = data[0]
+                        required_fields = ["id", "content", "author", "timestamp"]
+                        
+                        if all(field in first_vouch for field in required_fields):
+                            author = first_vouch.get("author", {})
+                            if isinstance(author, dict) and "username" in author:
+                                self.log_result(
+                                    "Discord Vouches API (GET /api/vouches)", 
+                                    True, 
+                                    f"Returned {len(data)} vouches with proper structure"
+                                )
+                            else:
+                                self.log_result(
+                                    "Discord Vouches API (GET /api/vouches)", 
+                                    False, 
+                                    "Author object missing username field",
+                                    first_vouch
+                                )
+                        else:
+                            self.log_result(
+                                "Discord Vouches API (GET /api/vouches)", 
+                                False, 
+                                f"Vouch missing required fields: {required_fields}",
+                                first_vouch
+                            )
+                    else:
+                        # Empty array is acceptable
+                        self.log_result(
+                            "Discord Vouches API (GET /api/vouches)", 
+                            True, 
+                            "Returned empty vouches array (no vouches available)"
+                        )
+                else:
+                    self.log_result(
+                        "Discord Vouches API (GET /api/vouches)", 
+                        False, 
+                        "Expected array response",
+                        data
+                    )
+            else:
+                self.log_result(
+                    "Discord Vouches API (GET /api/vouches)", 
+                    False, 
+                    f"Expected 200, got {response.status_code}",
+                    response.text
+                )
+        except Exception as e:
+            self.log_result("Discord Vouches API (GET /api/vouches)", False, f"Exception: {str(e)}")
+
+    def test_currency_rates_api(self):
+        """Test GET /api/currency/rates - Currency Conversion API"""
+        try:
+            response = self.session.get(f"{BASE_URL}/currency/rates")
+            
+            if response.status_code == 200:
+                data = response.json()
+                required_fields = ["base", "rates", "updated"]
+                
+                if all(field in data for field in required_fields):
+                    base = data.get("base")
+                    rates = data.get("rates", {})
+                    
+                    if base == "USD" and isinstance(rates, dict) and len(rates) > 0:
+                        # Check for some common currencies
+                        common_currencies = ["USD", "EUR", "GBP", "CAD"]
+                        found_currencies = [curr for curr in common_currencies if curr in rates]
+                        
+                        if len(found_currencies) >= 3:
+                            self.log_result(
+                                "Currency Rates API (GET /api/currency/rates)", 
+                                True, 
+                                f"Base: {base}, {len(rates)} exchange rates available"
+                            )
+                        else:
+                            self.log_result(
+                                "Currency Rates API (GET /api/currency/rates)", 
+                                False, 
+                                f"Missing common currencies. Found: {found_currencies}",
+                                rates
+                            )
+                    else:
+                        self.log_result(
+                            "Currency Rates API (GET /api/currency/rates)", 
+                            False, 
+                            f"Invalid base currency or rates format. Base: {base}",
+                            data
+                        )
+                else:
+                    self.log_result(
+                        "Currency Rates API (GET /api/currency/rates)", 
+                        False, 
+                        f"Missing required fields: {required_fields}",
+                        data
+                    )
+            else:
+                self.log_result(
+                    "Currency Rates API (GET /api/currency/rates)", 
+                    False, 
+                    f"Expected 200, got {response.status_code}",
+                    response.text
+                )
+        except Exception as e:
+            self.log_result("Currency Rates API (GET /api/currency/rates)", False, f"Exception: {str(e)}")
+
     def test_invalid_endpoints(self):
         """Test some invalid endpoints to ensure proper 404 handling"""
         invalid_endpoints = [
