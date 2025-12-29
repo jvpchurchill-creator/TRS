@@ -292,32 +292,12 @@ const ServicesPage = () => {
                 >
                   <CardContent className="p-3 text-center">
                     <div className="w-full aspect-square mb-3 bg-black/50 flex items-center justify-center overflow-hidden group-hover:scale-105 transition-transform duration-300">
-                      {character.icon ? (
-                        <img 
-                          src={character.icon} 
-                          alt={character.name}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                          onError={(e) => {
-                            console.log('Image failed to load:', character.icon);
-                            e.target.onerror = null; // Prevent infinite loop
-                            e.target.style.display = 'none';
-                            if (e.target.nextSibling) {
-                              e.target.nextSibling.style.display = 'flex';
-                            }
-                          }}
-                          onLoad={(e) => {
-                            e.target.style.display = 'block';
-                            if (e.target.nextSibling) {
-                              e.target.nextSibling.style.display = 'none';
-                            }
-                          }}
-                        />
-                      ) : null}
-                      <div 
-                        className="w-full h-full items-center justify-center"
-                        style={{ display: character.icon ? 'none' : 'flex' }}
-                      >
+                      <img 
+                        src={character.icon || `https://ui-avatars.com/api/?name=${encodeURIComponent(character.name)}&background=00FFD1&color=000&size=200`}
+                        alt={character.name}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
+                      />
                         <span className="text-4xl font-bold text-[#00FFD1]">
                           {character.name.charAt(0)}
                         </span>
