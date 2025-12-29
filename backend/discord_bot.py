@@ -356,3 +356,201 @@ async def get_active_boosters_count() -> int:
         logger.error(f"Error fetching booster count: {e}")
         return 0
 
+
+async def close_ticket_channel(channel_id: str, closed_by: str = "Staff") -> bool:
+    """
+    Close/delete a ticket channel
+    Sends a closing message before deleting
+    """
+    config = get_config()
+    if not config['bot_token']:
+        logger.error("Discord bot token not configured")
+        return False
+    
+    try:
+        async with httpx.AsyncClient() as client:
+            # Send closing message
+            embed = {
+                "title": "🔒 Ticket Closed",
+                "description": f"This ticket has been closed by **{closed_by}**.\n\nThank you for using The Rival Syndicate!",
+                "color": 65489,  # Cyan
+                "footer": {"text": "The Rival Syndicate"},
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            
+            await client.post(
+                f"{DISCORD_API}/channels/{channel_id}/messages",
+                headers=get_headers(),
+                json={"embeds": [embed]}
+            )
+            
+            # Wait a moment for message to send
+            import asyncio
+            await asyncio.sleep(1)
+            
+            # Delete the channel
+            response = await client.delete(
+                f"{DISCORD_API}/channels/{channel_id}",
+                headers=get_headers()
+            )
+            
+            if response.status_code in [200, 204]:
+                logger.info(f"Ticket channel {channel_id} closed by {closed_by}")
+                return True
+            else:
+                logger.error(f"Failed to delete channel: {response.status_code} - {response.text}")
+                return False
+                
+    except Exception as e:
+        logger.error(f"Error closing ticket channel: {e}")
+        return False
+
+
+async def register_slash_commands() -> bool:
+    """
+    Register slash commands with Discord
+    Should be called once on startup or when commands change
+    """
+    config = get_config()
+    if not config['bot_token'] or not config['guild_id']:
+        logger.error("Discord credentials not configured for slash commands")
+        return False
+    
+    # Get application ID from bot token
+    try:
+        async with httpx.AsyncClient() as client:
+            # Get bot application info
+            app_response = await client.get(
+                f"{DISCORD_API}/oauth2/applications/@me",
+                headers=get_headers()
+            )
+            
+            if app_response.status_code != 200:
+                logger.error(f"Failed to get application info: {app_response.text}")
+                return False
+            
+            app_id = app_response.json().get("id")
+            
+            # Define slash commands
+            commands = [
+                {
+                    "name": "close",
+                    "description": "Close this ticket channel (Boosters/Admins only)",
+                    "type": 1  # CHAT_INPUT
+                },
+                {
+                    "name": "complete",
+                    "description": "Mark the order as completed and close the ticket",
+                    "type": 1
+                }
+            ]
+            
+            # Register commands for the guild
+            for cmd in commands:
+                response = await client.post(
+                    f"{DISCORD_API}/applications/{app_id}/guilds/{config['guild_id']}/commands",
+                    headers=get_headers(),
+                    json=cmd
+                )
+                
+                if response.status_code in [200, 201]:
+                    logger.info(f"Registered slash command: /{cmd['name']}")
+                else:
+                    logger.error(f"Failed to register /{cmd['name']}: {response.status_code} - {response.text}")
+            
+            return True
+            
+    except Exception as e:
+        logger.error(f"Error registering slash commands: {e}")
+        return False
+
+
+async def handle_interaction(interaction_data: dict) -> dict:
+    """
+    Handle Discord interaction (slash command)
+    Returns the response to send back to Discord
+    """
+    config = get_config()
+    interaction_type = interaction_data.get("type")
+    
+    # Type 1 = Ping (respond with pong)
+    if interaction_type == 1:
+        return {"type": 1}
+    
+    # Type 2 = Application Command
+    if interaction_type == 2:
+        command_name = interaction_data.get("data", {}).get("name")
+        channel_id = interaction_data.get("channel_id")
+        member = interaction_data.get("member", {})
+        user = member.get("user", {})
+        member_roles = member.get("roles", [])
+        
+        # Check if user has booster/admin role
+        booster_role_ids = [r.strip() for r in config['booster_role_ids'] if r.strip()]
+        has_permission = any(role in member_roles for role in booster_role_ids)
+        
+        if not has_permission:
+            return {
+                "type": 4,  # CHANNEL_MESSAGE_WITH_SOURCE
+                "data": {
+                    "content": "❌ You don't have permission to use this command.",
+                    "flags": 64  # Ephemeral (only visible to user)
+                }
+            }
+        
+        if command_name == "close":
+            # Close the ticket
+            username = user.get("username", "Staff")
+            success = await close_ticket_channel(channel_id, username)
+            
+            if success:
+                return {
+                    "type": 4,
+                    "data": {
+                        "content": "✅ Closing ticket...",
+                        "flags": 64
+                    }
+                }
+            else:
+                return {
+                    "type": 4,
+                    "data": {
+                        "content": "❌ Failed to close ticket. Please try again or delete manually.",
+                        "flags": 64
+                    }
+                }
+        
+        elif command_name == "complete":
+            # Mark order as completed and close ticket
+            username = user.get("username", "Staff")
+            
+            # Send completion message first
+            async with httpx.AsyncClient() as client:
+                embed = {
+                    "title": "✅ Order Completed!",
+                    "description": f"Your order has been marked as **completed** by **{username}**.\n\nThank you for choosing The Rival Syndicate!\n\nThis ticket will close in 5 seconds...",
+                    "color": 65489,
+                    "footer": {"text": "The Rival Syndicate"},
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                
+                await client.post(
+                    f"{DISCORD_API}/channels/{channel_id}/messages",
+                    headers=get_headers(),
+                    json={"embeds": [embed]}
+                )
+            
+            # Close after delay
+            import asyncio
+            await asyncio.sleep(5)
+            await close_ticket_channel(channel_id, username)
+            
+            return {
+                "type": 4,
+                "data": {
+                    "content": "✅ Order marked as completed!",
+                    "flags": 64
+                }
+            }
+    
+    return {"type": 1}
