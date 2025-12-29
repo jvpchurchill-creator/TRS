@@ -150,7 +150,7 @@ def decode_access_token(token: str):
         return None
 
 # Dependency to get current user
-async def get_current_user(authorization: str = None):
+async def get_current_user(authorization: Optional[str] = Header(None)):
     if not authorization:
         logger.warning("No authorization header provided")
         raise HTTPException(status_code=401, detail="Not authenticated")
@@ -188,7 +188,7 @@ async def get_current_user(authorization: str = None):
         raise HTTPException(status_code=401, detail="Authentication failed")
 
 # Optional auth dependency
-async def get_current_user_optional(authorization: str = None):
+async def get_current_user_optional(authorization: Optional[str] = Header(None)):
     if not authorization:
         return None
     try:
@@ -312,7 +312,7 @@ async def discord_callback(code: str = None, error: str = None):
         return RedirectResponse(url=f"{FRONTEND_URL}/?error=server_error")
 
 @api_router.get("/auth/me")
-async def get_me(authorization: str = None):
+async def get_me(authorization: Optional[str] = Header(None)):
     """Get current authenticated user"""
     user = await get_current_user(authorization)
     return UserResponse(
@@ -328,7 +328,7 @@ async def get_me(authorization: str = None):
 # ============== USER ROUTES ==============
 
 @api_router.patch("/users/{user_id}/role")
-async def update_user_role(user_id: str, role: UserRole, authorization: str = None):
+async def update_user_role(user_id: str, role: UserRole, authorization: Optional[str] = Header(None)):
     """Update user role (admin only)"""
     current_user = await get_current_user(authorization)
     require_admin(current_user)
@@ -344,7 +344,7 @@ async def update_user_role(user_id: str, role: UserRole, authorization: str = No
     return {"success": True, "message": f"User role updated to {role}"}
 
 @api_router.get("/users", response_model=List[UserResponse])
-async def get_all_users(authorization: str = None):
+async def get_all_users(authorization: Optional[str] = Header(None)):
     """Get all users (admin only)"""
     current_user = await get_current_user(authorization)
     require_admin(current_user)
@@ -410,7 +410,7 @@ async def create_order(order_data: OrderCreate, authorization: Optional[str] = H
     return new_order.dict()
 
 @api_router.get("/orders")
-async def get_my_orders(authorization: str = None):
+async def get_my_orders(authorization: Optional[str] = Header(None)):
     """Get orders for current user"""
     user = await get_current_user(authorization)
     
@@ -418,7 +418,7 @@ async def get_my_orders(authorization: str = None):
     return orders
 
 @api_router.get("/orders/{order_id}")
-async def get_order(order_id: str, authorization: str = None):
+async def get_order(order_id: str, authorization: Optional[str] = Header(None)):
     """Get specific order"""
     user = await get_current_user(authorization)
     
@@ -433,7 +433,7 @@ async def get_order(order_id: str, authorization: str = None):
     return order
 
 @api_router.patch("/orders/{order_id}")
-async def update_order(order_id: str, order_update: OrderUpdate, authorization: str = None):
+async def update_order(order_id: str, order_update: OrderUpdate, authorization: Optional[str] = Header(None)):
     """Update order (admin/booster only)"""
     user = await get_current_user(authorization)
     require_admin_or_booster(user)
@@ -497,7 +497,7 @@ async def get_all_orders(
     status: Optional[OrderStatus] = None,
     page: int = Query(1, ge=1),
     limit: int = Query(50, ge=1, le=100),
-    authorization: str = None
+    authorization: Optional[str] = Header(None)
 ):
     """Get all orders (admin/booster only)"""
     user = await get_current_user(authorization)
@@ -520,7 +520,7 @@ async def get_all_orders(
     }
 
 @api_router.get("/admin/boosters")
-async def get_boosters(authorization: str = None):
+async def get_boosters(authorization: Optional[str] = Header(None)):
     """Get all boosters (admin only)"""
     user = await get_current_user(authorization)
     require_admin_or_booster(user)
